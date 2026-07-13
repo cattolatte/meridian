@@ -24,6 +24,7 @@ mlruns/
 # Data & model artifacts (rebuilt from scripts, never committed)
 data/
 artifacts/
+build/
 *.ckpt
 *.pt
 

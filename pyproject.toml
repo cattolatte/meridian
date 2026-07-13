@@ -43,6 +43,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Experiment tracking for the eval/training harnesses (RAG.md §5). Optional and
+# lazily imported, so the offline test suite never requires it.
+tracking = ["mlflow>=2.5"]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
@@ -51,6 +54,9 @@ dev = [
     "mypy>=1.10",
     "pre-commit>=3.7",
 ]
+
+[project.scripts]
+meridian = "meridian.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/cattolatte/meridian"
@@ -87,11 +93,11 @@ select = [
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "scripts"]
 
-# Upstream frameworks that ship no type stubs — don't fail on them.
+# Upstream frameworks / optional extras that ship no type stubs — don't fail on them.
 [[tool.mypy.overrides]]
-module = ["polaris.*", "zenith.*"]
+module = ["polaris.*", "zenith.*", "mlflow.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -107,4 +113,5 @@ exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
+    "\\.\\.\\.",  # Protocol / stub method bodies
 ]

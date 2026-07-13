@@ -1,5 +1,13 @@
 # Meridian
 
+[![CI](https://github.com/cattolatte/meridian/actions/workflows/ci.yml/badge.svg)](https://github.com/cattolatte/meridian/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/cattolatte/meridian?sort=semver)](https://github.com/cattolatte/meridian/releases)
+[![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue)](https://github.com/cattolatte/meridian)
+[![License: MIT](https://img.shields.io/github/license/cattolatte/meridian)](LICENSE)
+[![Checked with mypy](https://img.shields.io/badge/mypy-strict-blue)](https://mypy-lang.org/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 > A from-scratch grounded RAG engine over biomedical literature (PubMed).
 > Every ML component is trained in-house — tokenizer, dense retriever, reranker,
 > faithfulness verifier ([Polaris](https://github.com/cattolatte/Polaris)), and the
@@ -26,6 +34,23 @@ ordered vertical slices; end-to-end question answering ships from `v0.1.0`.
   confidence or answerability is low.
 - **The eval harness is the product.** Every published number is reproducible from
   a committed, seeded script. See [benchmarks/BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+
+## Quickstart (offline demo)
+
+The repository ships a tiny synthetic corpus so the vertical slice runs with no
+downloads:
+
+```bash
+uv sync
+uv run meridian ingest examples/sample_pubmed.xml --db build/corpus.sqlite
+uv run meridian ask "Does metformin reduce cardiovascular mortality in type 2 diabetes?" \
+    --db build/corpus.sqlite
+```
+
+You get cited sentences quoted verbatim from the corpus, a `GROUNDED` badge, and the
+"Not medical advice" banner — or an `ABSTAIN` when nothing relevant is retrieved. On
+the real corpus, replace the sample file with downloaded PubMed baseline files. (The
+sample is fabricated data for demonstration only.)
 
 ## Repository layout
 
