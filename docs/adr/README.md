@@ -9,6 +9,8 @@ ADR that supersedes the old one.
 | ADR | Title | Status |
 |---|---|---|
 | [0001](0001-scope.md) | Project scope: corpus domains, corpus size, model sizes, GPU budget | Accepted |
+| [0002](0002-chunking.md) | Chunking policy: one title+abstract chunk per document | Accepted |
+| [0003](0003-tokenizer-corpus-mix.md) | Tokenizer training corpus mix and vocabulary size | Accepted |
 
 ## Template
 
