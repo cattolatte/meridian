@@ -55,6 +55,9 @@ dev = [
     "pre-commit>=3.7",
 ]
 
+[project.scripts]
+meridian = "meridian.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/cattolatte/meridian"
 Repository = "https://github.com/cattolatte/meridian"
