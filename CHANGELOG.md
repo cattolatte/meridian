@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 2 — BM25 baseline + eval harness + extractive E2E v0.**
+  - `meridian.retrieval`: from-scratch BM25 Okapi (inverted index, search-time
+    k1/b, deterministic ranking) behind a `Retriever` protocol, with an injectable
+    text analyzer.
+  - `meridian.eval`: binary-relevance metrics (Recall@k, MRR@10, nDCG@10),
+    EvalSet/qrels types, frozen dev/test splits with a SHA-256 checksum guard
+    (house rule #4), a JSON-writing runner with optional MLflow logging, and
+    PubMedQA split construction.
+  - `meridian.answer`: extractive answerer v0 — verbatim cited sentences or
+    abstain — and its CLI rendering.
+  - `meridian` CLI (`ask`, `ingest`) as the console entry point;
+    `scripts/evaluate.py` and `scripts/build_splits.py`; `benchmarks/splits/`
+    sample split; `mlflow` optional `tracking` extra.
 - **Phase 1 — corpus ingestion + tokenizer.**
   - `meridian.corpus`: normalized `Document` record (ADR-0002 one-chunk-per-doc),
     MeSH domain filter for the ADR-0001 domains, streaming PubMed XML parser

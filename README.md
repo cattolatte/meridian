@@ -27,6 +27,23 @@ ordered vertical slices; end-to-end question answering ships from `v0.1.0`.
 - **The eval harness is the product.** Every published number is reproducible from
   a committed, seeded script. See [benchmarks/BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
+## Quickstart (offline demo)
+
+The repository ships a tiny synthetic corpus so the vertical slice runs with no
+downloads:
+
+```bash
+uv sync
+uv run meridian ingest examples/sample_pubmed.xml --db build/corpus.sqlite
+uv run meridian ask "Does metformin reduce cardiovascular mortality in type 2 diabetes?" \
+    --db build/corpus.sqlite
+```
+
+You get cited sentences quoted verbatim from the corpus, a `GROUNDED` badge, and the
+"Not medical advice" banner — or an `ABSTAIN` when nothing relevant is retrieved. On
+the real corpus, replace the sample file with downloaded PubMed baseline files. (The
+sample is fabricated data for demonstration only.)
+
 ## Repository layout
 
 ```

@@ -1,0 +1,26 @@
+{
+  "name": "sample-dev",
+  "queries": [
+    {
+      "query_id": "q1",
+      "question": "Do beta-blockers reduce mortality after myocardial infarction?",
+      "relevant_pmids": [
+        "10000001"
+      ]
+    },
+    {
+      "query_id": "q2",
+      "question": "Does metformin lower cardiovascular mortality in type 2 diabetes?",
+      "relevant_pmids": [
+        "10000002"
+      ]
+    },
+    {
+      "query_id": "q3",
+      "question": "Is levothyroxine helpful in subclinical hypothyroidism?",
+      "relevant_pmids": [
+        "10000003"
+      ]
+    }
+  ]
+}
