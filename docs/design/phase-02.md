@@ -67,7 +67,23 @@ written from memory.
 
 | Criterion | Status |
 |---|---|
-| Frozen splits with checksum guard | planned |
-| BM25 numbers in BENCHMARKS.md | mechanism ready; real row pending download |
-| CLI demo works offline on the built index | planned |
-| ≥ 90% coverage held | maintained |
+| Frozen splits with checksum guard | done (`eval.splits` + guard test; `sample_dev.json` registered) |
+| BM25 numbers in BENCHMARKS.md | mechanism done (`scripts/evaluate.py`); real row pending download |
+| CLI demo works offline on the built index | done (`meridian ask` verified on the sample corpus) |
+| ≥ 90% coverage held | maintained (97%) |
+
+## Remaining user-triggered step
+
+The retrieval baseline, eval harness, split-construction, and CLI are complete and
+verified offline. Outstanding Phase 2 work needs downloads the user runs:
+
+1. Ingest the real PubMed corpus (Phase 1 download).
+2. `scripts/build_splits.py` on PubMedQA PQA-L → register `dev.json`/`test.json`
+   checksums in `benchmarks/splits/checksums.json` (freeze once).
+3. `scripts/evaluate.py --db … --split benchmarks/splits/dev.json` → fills the real
+   BM25 row in `benchmarks/BENCHMARKS.md`. k1/b are tuned on **dev only** by
+   re-running with `--k1/--b`; the test split is untouched until Phase 11.
+
+Verified offline: `meridian ask` returns cited GROUNDED answers on the sample
+corpus; `scripts/evaluate.py` scores the frozen `sample_dev.json` split (perfect on
+the trivially-separable 6-doc sample) with the checksum guard enforced.
