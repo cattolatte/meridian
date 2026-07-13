@@ -26,4 +26,4 @@ repos:
       - id: mypy
         args: [--strict]
         additional_dependencies: [numpy]
-        files: ^(src|tests)/
+        files: ^(src|tests|scripts)/

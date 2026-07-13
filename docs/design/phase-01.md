@@ -68,8 +68,18 @@ its real-corpus rows are marked pending. No corpus number is stated from memory
 
 | Criterion | Status |
 |---|---|
-| One-command `scripts/ingest.py` rebuilds the store from raw files | in progress |
-| Tokenizer artifact versioned | in progress |
-| Stats report in `benchmarks/corpus.md` | in progress |
-| Parser edge-case tests | in progress |
-| Offline tests, ≥ 90% coverage held | maintained |
+| One-command `scripts/ingest.py` rebuilds the store from raw files | done (verified on the sample fixture) |
+| Tokenizer artifact versioned | done (`scripts/train_tokenizer.py` → versioned JSON with checksums) |
+| Stats report in `benchmarks/corpus.md` | done (scaffold + reproducible sample section; reference-corpus rows pending download) |
+| Parser edge-case tests | done (17 parser cases) |
+| Offline tests, ≥ 90% coverage held | maintained (98%) |
+
+## Remaining user-triggered step
+
+The pipeline and both scripts are complete and verified offline on the committed
+sample fixture. The only outstanding Phase 1 work is the **real ingestion run** —
+downloading the domain-filtered PubMed baseline (network) and executing
+`scripts/ingest.py` then `scripts/train_tokenizer.py` — which fills the
+reference-corpus and real-fertility rows in `benchmarks/corpus.md`. This is
+deliberately left to the user because it requires network access and a general-text
+(MS MARCO) sample; nothing in code or tests depends on it.

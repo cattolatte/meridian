@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tiny synthetic PubMed-format sample for demonstrating and testing the Meridian
+  ingest pipeline offline. These are fabricated records, NOT real PubMed data.
+  Real ingestion points scripts/ingest.py at downloaded baseline .xml.gz files.
+-->
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000001</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2016</Year></PubDate></JournalIssue>
+          <Title>Journal of Cardiology</Title>
+        </Journal>
+        <ArticleTitle>Beta-blockers and mortality after myocardial infarction</ArticleTitle>
+        <Abstract>
+          <AbstractText Label="BACKGROUND">Beta-blockers are widely prescribed after acute myocardial infarction.</AbstractText>
+          <AbstractText Label="RESULTS">Treatment was associated with reduced all-cause mortality over five years.</AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Myocardial Infarction</DescriptorName></MeshHeading>
+        <MeshHeading><DescriptorName>Adrenergic beta-Antagonists</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000002</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2018</Year></PubDate></JournalIssue>
+          <Title>Diabetes Care</Title>
+        </Journal>
+        <ArticleTitle>Metformin and cardiovascular outcomes in type 2 diabetes</ArticleTitle>
+        <Abstract>
+          <AbstractText>A cohort study of metformin therapy reported lower cardiovascular mortality compared with sulfonylureas.</AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Diabetes Mellitus, Type 2</DescriptorName></MeshHeading>
+        <MeshHeading><DescriptorName>Cardiovascular Diseases</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000003</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2018</Year></PubDate></JournalIssue>
+          <Title>Journal of Clinical Endocrinology</Title>
+        </Journal>
+        <ArticleTitle>Levothyroxine dosing in subclinical hypothyroidism</ArticleTitle>
+        <Abstract>
+          <AbstractText>Thyroid hormone replacement did not improve symptoms in older adults with mild subclinical hypothyroidism.</AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Hypothyroidism</DescriptorName></MeshHeading>
+        <MeshHeading><DescriptorName>Thyroid Diseases</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000004</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2020</Year></PubDate></JournalIssue>
+          <Title>Journal of Oncology</Title>
+        </Journal>
+        <ArticleTitle>Adjuvant chemotherapy in early-stage breast neoplasms</ArticleTitle>
+        <Abstract>
+          <AbstractText>Adjuvant chemotherapy improved disease-free survival in hormone-receptor-negative breast cancer.</AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Breast Neoplasms</DescriptorName></MeshHeading>
+        <MeshHeading><DescriptorName>Chemotherapy, Adjuvant</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000005</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2020</Year></PubDate></JournalIssue>
+          <Title>Journal of Oncology</Title>
+        </Journal>
+        <ArticleTitle>Immune checkpoint inhibitors in metastatic melanoma</ArticleTitle>
+        <Abstract>
+          <AbstractText>Checkpoint blockade produced durable responses in a subset of patients with metastatic melanoma.</AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Melanoma</DescriptorName></MeshHeading>
+        <MeshHeading><DescriptorName>Neoplasm Metastasis</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000006</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2019</Year></PubDate></JournalIssue>
+          <Title>Journal of Cardiology</Title>
+        </Journal>
+        <ArticleTitle>Diabetic cardiomyopathy: a review</ArticleTitle>
+        <Abstract>
+          <AbstractText>Diabetic cardiomyopathy links hyperglycemia to structural heart disease independent of coronary artery disease.</AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Diabetic Cardiomyopathies</DescriptorName></MeshHeading>
+        <MeshHeading><DescriptorName>Hyperglycemia</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000007</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2017</Year></PubDate></JournalIssue>
+          <Title>Tropical Medicine Reports</Title>
+        </Journal>
+        <ArticleTitle>Antimalarial drug resistance patterns</ArticleTitle>
+        <Abstract>
+          <AbstractText>Out-of-domain record: resistance to antimalarial therapy varied by region.</AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Malaria</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">10000008</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2019</Year></PubDate></JournalIssue>
+          <Title>Revista de Cardiologia</Title>
+        </Journal>
+        <ArticleTitle>Insuficiencia cardiaca y mortalidad</ArticleTitle>
+        <Abstract>
+          <AbstractText>Non-English record that should be dropped by the language filter.</AbstractText>
+        </Abstract>
+        <Language>spa</Language>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading><DescriptorName>Heart Failure</DescriptorName></MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+</PubmedArticleSet>

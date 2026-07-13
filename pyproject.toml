@@ -87,7 +87,7 @@ select = [
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "scripts"]
 
 # Upstream frameworks that ship no type stubs — don't fail on them.
 [[tool.mypy.overrides]]

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Phase 1 — corpus ingestion + tokenizer.**
+  - `meridian.corpus`: normalized `Document` record (ADR-0002 one-chunk-per-doc),
+    MeSH domain filter for the ADR-0001 domains, streaming PubMed XML parser
+    (structured abstracts, language/empty filtering), exact + near-duplicate-title
+    de-duplication, resumable checksummed baseline downloader, idempotent SQLite
+    document store behind a repository protocol, and corpus statistics.
+  - `meridian.tokenization`: mixed-corpus BPE training via Polaris (ADR-0003),
+    fertility metric, vocabulary-size sweep, and a versioned tokenizer artifact.
+  - `scripts/ingest.py` (one-command store rebuild + stats report) and
+    `scripts/train_tokenizer.py` (sweep + versioned artifact).
+  - ADR-0002 (chunking), ADR-0003 (tokenizer corpus mix), Phase 1 design doc,
+    `benchmarks/corpus.md` report, and a committed offline sample fixture.
+
 ## [0.0.1] - 2026-07-13
 
 ### Added
