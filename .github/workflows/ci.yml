@@ -31,10 +31,10 @@ jobs:
         run: uv sync --extra dev
 
       - name: Format check (Black)
-        run: uv run black --check src tests
+        run: uv run black --check src tests scripts
 
       - name: Lint (Ruff)
-        run: uv run ruff check src tests
+        run: uv run ruff check src tests scripts
 
       - name: Typecheck (mypy --strict)
         run: uv run mypy --strict
