@@ -8,6 +8,16 @@ depend on.
 
 from meridian.retrieval.analyzer import simple_analyzer
 from meridian.retrieval.bm25 import BM25Index
+from meridian.retrieval.dense import DenseRetriever
+from meridian.retrieval.embedding_index import EmbeddingIndex
 from meridian.retrieval.pipeline import BM25Retriever, RetrievalHit, Retriever
 
-__all__ = ["BM25Index", "BM25Retriever", "RetrievalHit", "Retriever", "simple_analyzer"]
+__all__ = [
+    "BM25Index",
+    "BM25Retriever",
+    "DenseRetriever",
+    "EmbeddingIndex",
+    "RetrievalHit",
+    "Retriever",
+    "simple_analyzer",
+]

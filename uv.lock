@@ -1523,6 +1523,7 @@ source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "polaris-nlp" },
+    { name = "torch" },
     { name = "zenith-nlp" },
 ]
 
@@ -1545,11 +1546,12 @@ requires-dist = [
     { name = "mlflow", marker = "extra == 'tracking'", specifier = ">=2.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "numpy", specifier = ">=1.26" },
-    { name = "polaris-nlp", specifier = "==1.1.0" },
+    { name = "polaris-nlp", specifier = "==1.2.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "torch", specifier = ">=2.2" },
     { name = "zenith-nlp", specifier = "==1.0.0" },
 ]
 provides-extras = ["tracking", "dev"]
@@ -2247,15 +2249,15 @@ wheels = [
 
 [[package]]
 name = "polaris-nlp"
-version = "1.1.0"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/c4/1a1ccf8e1ad978cec946b4cddacc2f348c18558d08b7aefb9169a508d228/polaris_nlp-1.1.0.tar.gz", hash = "sha256:d68dc002e66341deecb0b159e33fa7f255ac78942ad8f9a28910d5d134d1d58a", size = 89201, upload-time = "2026-07-05T09:18:22.218Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/fe/772838c0945dbf3b33c86d160d2cd4e86aa218c3bd286d8b80bf39fbed67/polaris_nlp-1.2.0.tar.gz", hash = "sha256:84fa64e4dbc638e1fd8016ead23da25ee81201f089e2719c29628fc130fcd3f5", size = 98609, upload-time = "2026-07-13T18:33:22.459Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/1b/e675cc41f60279d78eb72e1733a7e2e347782c07032b1cccb65bfcbb5580/polaris_nlp-1.1.0-py3-none-any.whl", hash = "sha256:ce7f53a4256a7a5d7df351b4702a73d7429615650c1a35ceac6209936d39368d", size = 94585, upload-time = "2026-07-05T09:18:20.809Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/44/a81f8d06b11d3e63bbe3c0df088da07db21e3c6c96281a80b2c5008c5ca9/polaris_nlp-1.2.0-py3-none-any.whl", hash = "sha256:fecb12be02e49aa390763f1387d823391faf227df5aa70856dc978c4fc4f68d7", size = 104637, upload-time = "2026-07-13T18:33:21.261Z" },
 ]
 
 [[package]]
