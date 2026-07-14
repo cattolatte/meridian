@@ -34,6 +34,7 @@ uv run python scripts/evaluate.py --db data/corpus.sqlite \
 |---|---|---|---|---|---|---|
 | BM25 (Phase 2) | TBD | TBD | TBD | TBD | TBD | TBD |
 | Dense (Phase 3) | TBD | TBD | TBD | TBD | TBD | TBD |
+| Retriever v2 (+hard neg, Phase 5) | TBD | TBD | TBD | TBD | TBD | TBD |
 | Hybrid RRF (Phase 5) | TBD | TBD | TBD | TBD | TBD | TBD |
 | Dense + rerank (Phase 6) | TBD | TBD | TBD | TBD | TBD | TBD |
 

@@ -54,7 +54,19 @@ counts come from the real run — no number written from memory.
 
 | Criterion | Status |
 |---|---|
-| Retriever v2 ≥ v1 on all frozen-dev metrics | mining + retrain mechanism; delta pending real run |
-| Hybrid measured | RRF implemented + wired into CLI/eval; row pending real run |
-| Failure taxonomy committed | scaffold + miss-sampler; audited counts pending real dev misses |
-| ≥ 90% coverage held | maintained |
+| Retriever v2 ≥ v1 on all frozen-dev metrics | mining + retrain mechanism done (`mine_hard_negatives` → `train_retriever`); delta pending real run |
+| Hybrid measured | RRF done + wired (`meridian ask --retriever hybrid`, `evaluate.py`); row pending real run |
+| Failure taxonomy committed | **done** — [failure-taxonomy.md](failure-taxonomy.md) scaffold + `sample_misses`; audited counts pending real dev misses |
+| ≥ 90% coverage held | maintained (97%) |
+
+## Remaining user-triggered step
+
+Mining, RRF fusion, and miss-sampling are complete and verified offline. The real
+numbers need the trained retriever + frozen dev split:
+
+1. `mine_hard_negatives([bm25, dense], store, train_pairs)` → retrain with
+   `train_retriever` → retriever v2; compare to v1 on frozen dev (must be ≥ on all
+   metrics to adopt — honesty gate).
+2. `scripts/evaluate.py --retriever hybrid …` → the hybrid row in `BENCHMARKS.md`.
+3. `sample_misses(retriever, dev, k=20)` → hand-audit 50 misses → fill the taxonomy
+   counts.

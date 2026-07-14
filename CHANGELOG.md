@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 5 — hard negatives, retriever v2, hybrid retrieval.**
+  - `meridian.encoder.mining.mine_hard_negatives`: pool top non-relevant passages
+    from BM25 + dense into `(anchor, positive, negatives)` triples for retraining.
+  - `meridian.retrieval.hybrid.HybridRetriever`: reciprocal rank fusion of BM25 +
+    dense; wired as `meridian ask --retriever hybrid` and in `scripts/evaluate.py`.
+  - `meridian.eval.sample_misses` + `docs/design/failure-taxonomy.md` scaffold.
 - **Phase 4 — ANN index from scratch (IVF + HNSW).**
   - `meridian.retrieval.ann`: `VectorIndex` protocol; seeded Lloyd k-means
     (k-means++ init); `IVFIndex` (nlist cells, nprobe search, exact rerank);
