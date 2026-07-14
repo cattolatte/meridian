@@ -17,17 +17,21 @@ from meridian.encoder.data import (
     mine_title_abstract_pairs,
 )
 from meridian.encoder.embed import embed_documents, encode_texts
+from meridian.encoder.pretrain import build_mlm, initialize_from_mlm, mlm_pretrain
 from meridian.encoder.training import train_retriever
 
 __all__ = [
     "EmbedderConfig",
     "build_embedder",
+    "build_mlm",
     "embed_documents",
     "encode_texts",
+    "initialize_from_mlm",
     "load_embedder",
     "make_contrastive_samples",
     "make_contrastive_samples_with_negatives",
     "mine_title_abstract_pairs",
+    "mlm_pretrain",
     "save_embedder",
     "train_retriever",
 ]
