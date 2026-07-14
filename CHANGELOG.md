@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 4 — ANN index from scratch (IVF + HNSW).**
+  - `meridian.retrieval.ann`: `VectorIndex` protocol; seeded Lloyd k-means
+    (k-means++ init); `IVFIndex` (nlist cells, nprobe search, exact rerank);
+    `HNSWIndex` (layered navigable small-world graph, greedy build/search); a
+    `build_ann_index` dispatcher. No external ANN library.
+  - `DenseRetriever` now searches any backend; CLI `meridian ask --ann
+    {none,ivf,hnsw}` and `scripts/evaluate.py --ann`.
+  - `scripts/benchmark_ann.py` + committed recall/latency figure; ADR-0005
+    (default backend). `matplotlib` added as the optional `benchmark` extra.
 - **Phase 3 — dense retriever: Polaris bi-encoder + contrastive training.**
   - Bumps the pin to `polaris-nlp==1.2.0`; adds `torch` as a direct dependency.
   - `meridian.retrieval`: brute-force `EmbeddingIndex` (memory-mapped float32

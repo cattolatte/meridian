@@ -12,6 +12,7 @@ ADR that supersedes the old one.
 | [0002](0002-chunking.md) | Chunking policy: one title+abstract chunk per document | Accepted |
 | [0003](0003-tokenizer-corpus-mix.md) | Tokenizer training corpus mix and vocabulary size | Accepted |
 | [0004](0004-training-curriculum.md) | Dense retriever training curriculum (MLM → contrastive → domain) | Accepted |
+| [0005](0005-default-index.md) | Default ANN index backend (HNSW; reaffirm from real benchmark) | Accepted |
 
 ## Template
 

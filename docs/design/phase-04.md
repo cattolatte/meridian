@@ -63,7 +63,18 @@ ADR-0005 numbers from the real index — none are written from memory.
 
 | Criterion | Status |
 |---|---|
-| ANN recall@10 ≥ 0.95 vs brute force at acceptable latency | mechanism + tests; real point pending Phase-3 embeddings |
-| CLI switches index backend by config | planned (Milestone 3) |
-| ADR-0005 default from measured curves | planned (Milestone 3) |
-| ≥ 90% coverage held | maintained |
+| ANN recall@10 ≥ 0.95 vs brute force at acceptable latency | **shown** — HNSW ef=16 → recall 0.999 below brute-force latency (synthetic benchmark); real-corpus point pending Phase-3 embeddings |
+| CLI switches index backend by config | **done** — `meridian ask --ann {none,ivf,hnsw}` verified |
+| ADR-0005 default from measured curves | **done** — [ADR-0005](../adr/0005-default-index.md) from the committed benchmark figure |
+| ≥ 90% coverage held | maintained (97%) |
+
+## Remaining user-triggered step
+
+IVF, HNSW, the backend switch, and the benchmark are complete and verified offline
+(synthetic curves in `benchmarks/figures/ann_tradeoff.png`). The real
+recall/latency/RAM numbers and the ADR-0005 reaffirmation need the Phase-3 corpus
+embeddings: run `scripts/benchmark_ann.py --embedding-index <dir>` on the real index.
+Persistence note: ANN structures are rebuilt deterministically (seeded) from the
+persisted embeddings rather than serialized separately — less storage, no stale-index
+risk; full graph serialization is a possible optimization if rebuild time becomes a
+concern at scale.

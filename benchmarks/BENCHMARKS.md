@@ -49,12 +49,20 @@ The dense retriever (Phase 3) is implemented and runs end-to-end
 ## ANN index quality (Phase 4)
 
 Recall@10 vs brute-force ground truth, as a recall / latency / memory trade-off.
+Reproduce with `scripts/benchmark_ann.py` (default: synthetic; `--embedding-index <dir>`
+for the real corpus). Default backend chosen in [ADR-0005](../docs/adr/0005-default-index.md);
+trade-off curve: [`figures/ann_tradeoff.png`](figures/ann_tradeoff.png).
 
 | Index | Recall@10 | P50 latency | RAM | Run ID |
 |---|---|---|---|---|
 | Brute force | 1.000 | TBD | TBD | TBD |
 | IVF | TBD | TBD | TBD | TBD |
 | HNSW | TBD | TBD | TBD | TBD |
+
+The three backends are implemented and benchmarked offline on synthetic vectors
+(N=2000, dim=64): HNSW reaches recall@10 ≈ 0.999 at efSearch=16 below brute-force
+latency; IVF trades recall for latency across nprobe. Real-corpus rows are filled from
+the Phase-3 embeddings (no number written from memory).
 
 ## Faithfulness (Phase 8)
 
