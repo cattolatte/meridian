@@ -1550,7 +1550,7 @@ requires-dist = [
     { name = "mlflow", marker = "extra == 'tracking'", specifier = ">=2.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "numpy", specifier = ">=1.26" },
-    { name = "polaris-nlp", specifier = "==1.2.0" },
+    { name = "polaris-nlp", specifier = "==1.4.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
@@ -2253,15 +2253,15 @@ wheels = [
 
 [[package]]
 name = "polaris-nlp"
-version = "1.2.0"
+version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/01/fe/772838c0945dbf3b33c86d160d2cd4e86aa218c3bd286d8b80bf39fbed67/polaris_nlp-1.2.0.tar.gz", hash = "sha256:84fa64e4dbc638e1fd8016ead23da25ee81201f089e2719c29628fc130fcd3f5", size = 98609, upload-time = "2026-07-13T18:33:22.459Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/96/eb/40d93199b8c59ef660d8c88cf152c0137e246795f349610bd7cb2c8b3281/polaris_nlp-1.4.0.tar.gz", hash = "sha256:d94468c42ff58f8a27ed252d6d0e8c114113371ca3b8dc0aa13c25845dfcd20e", size = 106215, upload-time = "2026-07-14T06:36:54.998Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a1/44/a81f8d06b11d3e63bbe3c0df088da07db21e3c6c96281a80b2c5008c5ca9/polaris_nlp-1.2.0-py3-none-any.whl", hash = "sha256:fecb12be02e49aa390763f1387d823391faf227df5aa70856dc978c4fc4f68d7", size = 104637, upload-time = "2026-07-13T18:33:21.261Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/7f/2cc92bcb412a2dc8acf99cc02d6dae84c8b8b82600467c2fd630b4c58861/polaris_nlp-1.4.0-py3-none-any.whl", hash = "sha256:a8cf8ded8f8b94b12eaa6b5de44d0af3a62a96da6a58c96a0eaa55cda0eef3a3", size = 112367, upload-time = "2026-07-14T06:36:53.596Z" },
 ]
 
 [[package]]

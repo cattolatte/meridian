@@ -21,6 +21,12 @@ from meridian.tokenization.fertility import fertility
 DEFAULT_MIX_RATIO = 0.7
 DEFAULT_UNK_TOKEN = "<unk>"
 DEFAULT_PAD_TOKEN = "<pad>"
+# Reserved so one vocabulary serves every model: MLM masking needs <mask>; the
+# cross-encoder pair head (Phase 6+) needs <cls>/<sep> (ADR-0003 deferred these to
+# later phases — Polaris 1.3.0 reserves them at train time without shifting ids).
+DEFAULT_MASK_TOKEN = "<mask>"
+DEFAULT_CLS_TOKEN = "<cls>"
+DEFAULT_SEP_TOKEN = "<sep>"
 
 
 def _mixed_word_sequences(
@@ -67,14 +73,24 @@ def train_tokenizer(
     min_frequency: int = 1,
     unk_token: str = DEFAULT_UNK_TOKEN,
     pad_token: str = DEFAULT_PAD_TOKEN,
+    mask_token: str = DEFAULT_MASK_TOKEN,
+    cls_token: str = DEFAULT_CLS_TOKEN,
+    sep_token: str = DEFAULT_SEP_TOKEN,
 ) -> BPETokenizer:
-    """Train a BPE tokenizer on the mixed corpus and return it."""
+    """Train a BPE tokenizer on the mixed corpus and return it.
+
+    Reserves ``<unk>``/``<pad>``/``<mask>``/``<cls>``/``<sep>`` so the same vocabulary
+    serves the MLM, embedder, and cross-encoder pair models.
+    """
     sequences = _mixed_word_sequences(biomedical_texts, general_texts, mix_ratio)
     return train_bpe(
         sequences,
         vocab_size=vocab_size,
         unk_token=unk_token,
         pad_token=pad_token,
+        mask_token=mask_token,
+        cls_token=cls_token,
+        sep_token=sep_token,
         min_frequency=min_frequency,
     )
 

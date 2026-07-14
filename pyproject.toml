@@ -37,7 +37,7 @@ classifiers = [
 # (house rule: framework extensions land upstream and are consumed as releases).
 # Everything else in this repo is built on PyTorch/NumPy primitives.
 dependencies = [
-    "polaris-nlp==1.2.0",
+    "polaris-nlp==1.4.0",
     "zenith-nlp==1.0.0",
     "numpy>=1.26",
     "torch>=2.2",
