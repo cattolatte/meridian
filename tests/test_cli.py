@@ -45,6 +45,18 @@ def test_ask_without_store_errors(tmp_path: Path, capsys: pytest.CaptureFixture[
     assert "not found" in capsys.readouterr().out
 
 
+def test_ask_dense_missing_artifacts_errors(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    db = tmp_path / "corpus.sqlite"
+    _ingest(db)
+    capsys.readouterr()
+    code = main(["ask", "heart failure", "--db", str(db), "--retriever", "dense"])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "--embedder" in out  # dense requires artifacts
+
+
 def test_ingest_reports_counts(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     db = tmp_path / "corpus.sqlite"
     code = main(["ingest", str(_SAMPLE), "--db", str(db)])

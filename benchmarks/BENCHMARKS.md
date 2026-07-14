@@ -41,6 +41,11 @@ The harness and BM25 baseline are implemented and verified offline on the commit
 sample corpus/split; the real row is filled once the PubMed corpus and PubMedQA
 splits are downloaded (no number is written from memory).
 
+The dense retriever (Phase 3) is implemented and runs end-to-end
+(`scripts/train_retriever.py` → `scripts/embed_corpus.py` →
+`scripts/evaluate.py --retriever dense`). Its row, and the ADR-0004 ablations
+(`--random-init` vs Stage-0; Stage A vs A+B), are filled from a real training run.
+
 ## ANN index quality (Phase 4)
 
 Recall@10 vs brute-force ground truth, as a recall / latency / memory trade-off.

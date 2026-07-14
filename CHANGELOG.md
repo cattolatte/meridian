@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 3 — dense retriever: Polaris bi-encoder + contrastive training.**
+  - Bumps the pin to `polaris-nlp==1.2.0`; adds `torch` as a direct dependency.
+  - `meridian.retrieval`: brute-force `EmbeddingIndex` (memory-mapped float32
+    shards, exact cosine top-k — the Phase-4 ANN ground truth) and
+    `DenseRetriever` behind the `Retriever` protocol; a `build_retriever` factory.
+  - `meridian.encoder`: corpus embedding, the ADR-0004 curriculum — Stage-0 MLM
+    pretraining + trunk transfer, Stage A/B contrastive training (InfoNCE),
+    contrastive-sample builders — and a versioned embedder artifact.
+  - `meridian.tokenization.special_tokens`: append a `<mask>` token without
+    renumbering existing ids (ADR-0003 superseding note).
+  - CLI `meridian ask --retriever dense`; `scripts/train_retriever.py`,
+    `scripts/embed_corpus.py`, and dense support in `scripts/evaluate.py`.
+  - ADR-0004 (training curriculum) and the Phase 3 design doc.
 - **Phase 2 — BM25 baseline + eval harness + extractive E2E v0.**
   - `meridian.retrieval`: from-scratch BM25 Okapi (inverted index, search-time
     k1/b, deterministic ranking) behind a `Retriever` protocol, with an injectable

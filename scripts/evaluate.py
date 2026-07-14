@@ -20,7 +20,14 @@ from meridian.corpus.store import SqliteDocumentStore
 from meridian.eval.harness import log_to_mlflow, run_evaluation, write_results
 from meridian.eval.qrels import load_eval_set
 from meridian.eval.splits import load_frozen_split
-from meridian.retrieval.pipeline import BM25Retriever
+from meridian.retrieval.factory import build_dense_retriever
+from meridian.retrieval.pipeline import BM25Retriever, Retriever
+
+
+def _require(parser: argparse.ArgumentParser, value: Path | None, flag: str) -> Path:
+    if value is None:
+        parser.error(f"dense retrieval requires {flag}")
+    return value
 
 
 def main() -> None:
@@ -29,8 +36,14 @@ def main() -> None:
     parser.add_argument("--split", type=Path, required=True, help="eval split JSON")
     parser.add_argument("--checksum", help="expected split checksum (enforces the frozen guard)")
     parser.add_argument("--out", type=Path, help="write JSON results here")
+    parser.add_argument(
+        "--retriever", choices=("bm25", "dense"), default="bm25", help="retrieval backend"
+    )
     parser.add_argument("--k1", type=float, default=1.5)
     parser.add_argument("--b", type=float, default=0.75)
+    parser.add_argument("--embedder", type=Path, help="embedder artifact dir (dense)")
+    parser.add_argument("--tokenizer", type=Path, help="tokenizer artifact path (dense)")
+    parser.add_argument("--index", type=Path, help="prebuilt embedding index dir (dense; optional)")
     parser.add_argument("--mlflow-experiment", help="log metrics to this MLflow experiment")
     args = parser.parse_args()
 
@@ -38,7 +51,15 @@ def main() -> None:
         load_frozen_split(args.split, args.checksum) if args.checksum else load_eval_set(args.split)
     )
     with SqliteDocumentStore(args.db) as store:
-        retriever = BM25Retriever.from_store(store, k1=args.k1, b=args.b)
+        if args.retriever == "bm25":
+            retriever: Retriever = BM25Retriever.from_store(store, k1=args.k1, b=args.b)
+        else:
+            retriever = build_dense_retriever(
+                store,
+                embedder_dir=_require(parser, args.embedder, "--embedder"),
+                tokenizer_path=_require(parser, args.tokenizer, "--tokenizer"),
+                index_dir=args.index,
+            )
         result = run_evaluation(retriever, eval_set)
 
     for name, value in sorted(result.metrics.items()):

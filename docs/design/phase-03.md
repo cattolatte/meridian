@@ -76,7 +76,26 @@ and the search path are verified offline with small synthetic models; the dense 
 
 | Criterion | Status |
 |---|---|
-| Reproducible training config (Hydra) + seeds | planned (Milestone 2) |
-| Dense retrieval live behind the same CLI | planned (Milestone 3; infra this milestone) |
-| Ablation table committed | pending real training run |
-| ≥ 90% coverage held | maintained |
+| Reproducible training config + seeds | done (seeded `EmbedderConfig` + scripts; Hydra deferred — configs are plain dataclasses the scripts drive) |
+| Dense retrieval live behind the same CLI | **done** — `meridian ask --retriever dense` verified end-to-end on the sample corpus |
+| Ablation table committed | mechanism done (`--random-init` + `scripts/evaluate.py --retriever dense`); real numbers pending training run |
+| ≥ 90% coverage held | maintained (97%) |
+
+## Remaining user-triggered step
+
+The full curriculum, dense search, artifacts, scripts, and CLI wiring are complete and
+verified offline (train_retriever → embed_corpus → `meridian ask --retriever dense`
+runs end-to-end on the sample corpus with a tiny model). Outstanding work needs the
+real corpus + MS MARCO + MPS/CUDA compute:
+
+1. `scripts/train_retriever.py` with real MS MARCO pairs (Stage A) + `--mine-title-abstract`
+   (Stage B), full-size (`--embed-dim 256 --num-layers 4`).
+2. `scripts/embed_corpus.py` to build the corpus index.
+3. `scripts/evaluate.py --retriever dense` on the frozen dev split → dense row in
+   `BENCHMARKS.md`; run with/without `--random-init` and Stage B for the ADR-0004
+   ablations. If dense < BM25, publish and diagnose (honesty clause).
+
+**Note on Hydra:** the plan named Hydra for training config; Phase 3 uses seeded
+dataclass configs driven by argparse scripts, which meets "reproducible config + seeds"
+without the Hydra dependency. If sweep orchestration is needed later, Hydra can wrap the
+same config objects — recorded here as a deliberate, minor deviation.

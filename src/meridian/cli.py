@@ -17,7 +17,7 @@ from pathlib import Path
 from meridian.answer.extractive import answer_extractive, render_answer
 from meridian.corpus.ingest import ingest_documents
 from meridian.corpus.store import SqliteDocumentStore
-from meridian.retrieval.pipeline import BM25Retriever
+from meridian.retrieval.factory import build_retriever
 
 _XML_SUFFIXES = (".xml", ".xml.gz")
 
@@ -55,7 +55,17 @@ def _run_ask(args: argparse.Namespace) -> int:
         if store.count() == 0:
             print("document store is empty (run 'meridian ingest' first)")
             return 1
-        retriever = BM25Retriever.from_store(store)
+        try:
+            retriever = build_retriever(
+                args.retriever,
+                store,
+                embedder_dir=args.embedder,
+                tokenizer_path=args.tokenizer,
+                index_dir=args.index,
+            )
+        except ValueError as error:
+            print(str(error))
+            return 1
         answer = answer_extractive(
             retriever, args.question, k_passages=args.passages, max_sentences=args.sentences
         )
@@ -78,6 +88,12 @@ def build_parser() -> argparse.ArgumentParser:
     ask = subparsers.add_parser("ask", help="answer a question with cited extractive passages")
     ask.add_argument("question", help="the question to answer")
     ask.add_argument("--db", type=Path, required=True, help="SQLite document store path")
+    ask.add_argument(
+        "--retriever", choices=("bm25", "dense"), default="bm25", help="retrieval backend"
+    )
+    ask.add_argument("--embedder", type=Path, help="trained embedder artifact dir (dense)")
+    ask.add_argument("--tokenizer", type=Path, help="tokenizer artifact path (dense)")
+    ask.add_argument("--index", type=Path, help="prebuilt embedding index dir (dense; optional)")
     ask.add_argument("--passages", type=int, default=5, help="passages to retrieve")
     ask.add_argument("--sentences", type=int, default=3, help="cited sentences to return")
     ask.set_defaults(func=_run_ask)
