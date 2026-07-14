@@ -34,6 +34,7 @@ def test_make_samples_with_negatives() -> None:
     samples = make_contrastive_samples_with_negatives([("q", "pos", ["neg1", "neg2"])], tok)
     anchor, positive, negatives = samples[0]
     assert anchor.ids == tok.encode("q").ids
+    assert positive.ids == tok.encode("pos").ids
     assert len(negatives) == 2
 
 
