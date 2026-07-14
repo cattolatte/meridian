@@ -44,6 +44,9 @@ def main() -> None:
     parser.add_argument("--embedder", type=Path, help="embedder artifact dir (dense)")
     parser.add_argument("--tokenizer", type=Path, help="tokenizer artifact path (dense)")
     parser.add_argument("--index", type=Path, help="prebuilt embedding index dir (dense; optional)")
+    parser.add_argument(
+        "--ann", choices=("none", "ivf", "hnsw"), default="none", help="ANN search backend (dense)"
+    )
     parser.add_argument("--mlflow-experiment", help="log metrics to this MLflow experiment")
     args = parser.parse_args()
 
@@ -59,6 +62,7 @@ def main() -> None:
                 embedder_dir=_require(parser, args.embedder, "--embedder"),
                 tokenizer_path=_require(parser, args.tokenizer, "--tokenizer"),
                 index_dir=args.index,
+                ann=args.ann,
             )
         result = run_evaluation(retriever, eval_set)
 

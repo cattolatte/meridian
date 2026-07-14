@@ -10,8 +10,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
+
 from meridian.corpus.store import DocumentStore
 from meridian.encoder.artifact import load_embedder
+from meridian.encoder.embed import embed_documents
+from meridian.retrieval.ann import build_ann_index
+from meridian.retrieval.ann.base import VectorIndex
 from meridian.retrieval.dense import DenseRetriever
 from meridian.retrieval.embedding_index import EmbeddingIndex
 from meridian.retrieval.pipeline import BM25Retriever, Retriever
@@ -24,15 +29,30 @@ def build_dense_retriever(
     embedder_dir: str | Path,
     tokenizer_path: str | Path,
     index_dir: str | Path | None = None,
+    ann: str = "none",
     max_length: int = 256,
 ) -> DenseRetriever:
-    """Load the embedder + tokenizer and build a dense retriever over ``store``."""
+    """Load the embedder + tokenizer and build a dense retriever over ``store``.
+
+    ``ann`` selects the search backend: ``"none"`` (exact brute force), ``"ivf"``, or
+    ``"hnsw"``. The ANN structure is built deterministically from the corpus vectors
+    (loaded from ``index_dir`` if given, else embedded on the fly).
+    """
     tokenizer = load_tokenizer(tokenizer_path)
     embedder = load_embedder(embedder_dir)
     if index_dir is not None:
-        index = EmbeddingIndex.load(index_dir)
-        return DenseRetriever(embedder, tokenizer, index, store, max_length=max_length)
-    return DenseRetriever.from_store(embedder, tokenizer, store, max_length=max_length)
+        base = EmbeddingIndex.load(index_dir)
+        pmids, vectors = list(base.pmids), np.asarray(base.vectors, dtype=np.float32)
+    else:
+        pmids, vectors = embed_documents(
+            embedder, tokenizer, store.iter_documents(), max_length=max_length
+        )
+    index: VectorIndex = (
+        EmbeddingIndex.build(pmids, vectors)
+        if ann == "none"
+        else build_ann_index(ann, pmids, vectors)
+    )
+    return DenseRetriever(embedder, tokenizer, index, store, max_length=max_length)
 
 
 def build_retriever(
@@ -42,6 +62,7 @@ def build_retriever(
     embedder_dir: str | Path | None = None,
     tokenizer_path: str | Path | None = None,
     index_dir: str | Path | None = None,
+    ann: str = "none",
 ) -> Retriever:
     """Build the ``bm25`` or ``dense`` retriever.
 
@@ -57,5 +78,6 @@ def build_retriever(
             embedder_dir=embedder_dir,
             tokenizer_path=tokenizer_path,
             index_dir=index_dir,
+            ann=ann,
         )
     raise ValueError(f"unknown retriever kind: {kind!r}")

@@ -13,6 +13,7 @@ from polaris.tokenizers import BPETokenizer
 
 from meridian.corpus.store import DocumentStore
 from meridian.encoder.embed import embed_documents, encode_texts
+from meridian.retrieval.ann.base import VectorIndex
 from meridian.retrieval.embedding_index import EmbeddingIndex
 from meridian.retrieval.pipeline import RetrievalHit
 
@@ -24,7 +25,7 @@ class DenseRetriever:
         self,
         embedder: TextEmbedder,
         tokenizer: BPETokenizer,
-        index: EmbeddingIndex,
+        index: VectorIndex,
         store: DocumentStore,
         *,
         max_length: int = 256,
@@ -57,7 +58,7 @@ class DenseRetriever:
         return cls(embedder, tokenizer, index, store, max_length=max_length)
 
     @property
-    def index(self) -> EmbeddingIndex:
+    def index(self) -> VectorIndex:
         return self._index
 
     def retrieve(self, query: str, *, k: int = 10) -> list[RetrievalHit]:

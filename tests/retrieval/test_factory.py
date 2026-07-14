@@ -10,7 +10,8 @@ from polaris.tokenizers import BPETokenizer
 
 from meridian.corpus.records import Document
 from meridian.corpus.store import SqliteDocumentStore
-from meridian.encoder.artifact import EmbedderConfig, build_embedder, save_embedder
+from meridian.encoder.artifact import EmbedderConfig, build_embedder, load_embedder, save_embedder
+from meridian.encoder.embed import embed_documents
 from meridian.retrieval.dense import DenseRetriever
 from meridian.retrieval.embedding_index import EmbeddingIndex
 from meridian.retrieval.factory import build_dense_retriever, build_retriever
@@ -75,13 +76,25 @@ def test_build_dense_from_artifacts(tmp_path: Path) -> None:
         assert len(hits) == 2
 
 
-def test_dense_with_prebuilt_index(tmp_path: Path) -> None:
+@pytest.mark.parametrize("ann", ["ivf", "hnsw"])
+def test_build_dense_with_ann_backend(tmp_path: Path, ann: str) -> None:
     emb_dir, tok_path, _ = _artifacts(tmp_path)
     with _store() as store:
-        # Build an index once, persist it, then load it via the factory.
-        base = build_dense_retriever(store, embedder_dir=emb_dir, tokenizer_path=tok_path)
-        base.index.save(tmp_path / "idx")
-        assert EmbeddingIndex.load(tmp_path / "idx").pmids == base.index.pmids
+        retriever = build_retriever(
+            "dense", store, embedder_dir=emb_dir, tokenizer_path=tok_path, ann=ann
+        )
+        assert isinstance(retriever, DenseRetriever)
+        assert len(retriever.retrieve("diabetes", k=2)) == 2
+
+
+def test_dense_with_prebuilt_index(tmp_path: Path) -> None:
+    emb_dir, tok_path, tok = _artifacts(tmp_path)
+    with _store() as store:
+        # Persist an embedding index once, then load it via the factory.
+        embedder = load_embedder(emb_dir)
+        pmids, vectors = embed_documents(embedder, tok, list(store.iter_documents()))
+        EmbeddingIndex.build(pmids, vectors).save(tmp_path / "idx")
+
         retriever = build_dense_retriever(
             store, embedder_dir=emb_dir, tokenizer_path=tok_path, index_dir=tmp_path / "idx"
         )
