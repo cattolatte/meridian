@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 6 — cross-encoder reranker.**
+  - Bumps the pin to `polaris-nlp==1.4.0` (SentencePairClassifier, collate_pairs,
+    special-token reservation, native BPETokenizer save/load).
+  - `meridian.tokenization`: the tokenizer now reserves `<mask>`/`<cls>`/`<sep>` so
+    one vocabulary serves the MLM, embedder, and pair models.
+  - `meridian.reranker`: `SentencePairClassifier` (num_classes=1) config/artifact,
+    pointwise pair-sample builders, and BCE `train_reranker`.
+  - `meridian.retrieval.rerank.RerankingRetriever`: rerank a base retriever's
+    top-N candidates with the cross-encoder; `meridian ask --rerank --reranker DIR`
+    and `scripts/evaluate.py --rerank`.
 - **Phase 5 — hard negatives, retriever v2, hybrid retrieval.**
   - `meridian.encoder.mining.mine_hard_negatives`: pool top non-relevant passages
     from BM25 + dense into `(anchor, positive, negatives)` triples for retraining.

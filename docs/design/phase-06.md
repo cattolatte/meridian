@@ -59,7 +59,20 @@ fixtures; the reranker row and latency numbers in `BENCHMARKS.md` come from the 
 
 | Criterion | Status |
 |---|---|
-| Reranker improves nDCG@10 by a measured margin | mechanism; delta pending real run |
-| Config flag to disable it | planned (Milestone 3: `--rerank`) |
-| Latency documented | planned (rerank-stage benchmark) |
-| ≥ 90% coverage held | maintained |
+| Reranker improves nDCG@10 by a measured margin | mechanism done (`RerankingRetriever` + training); delta pending real run |
+| Config flag to disable it | **done** — reranking is opt-in via `meridian ask --rerank --reranker DIR` (default off) |
+| Latency documented | pending real run (rerank is the top-N × cross-encoder cost) |
+| ≥ 90% coverage held | maintained (97%) |
+
+## Remaining user-triggered step
+
+The pair model, training, artifact, rerank stage, and CLI/eval wiring are complete and
+verified offline (a small reranker reorders a base ranking toward the relevant doc).
+Outstanding work needs the real corpus + Stage-0 trunk + frozen dev split:
+
+1. Train the reranker: init `SentencePairClassifier(num_classes=1)` from the Stage-0
+   trunk (`transfer_encoder_to`), `train_reranker` on MS MARCO `pairs_from_triples` +
+   mined PubMed pairs, `save_reranker`.
+2. `scripts/evaluate.py --rerank --reranker DIR` on the frozen dev split → the reranker
+   row in `BENCHMARKS.md` (nDCG@10/MRR@10 with vs without), plus the rerank-stage
+   latency. Adopt only if nDCG@10 improves (honesty gate).

@@ -15,12 +15,14 @@ import numpy as np
 from meridian.corpus.store import DocumentStore
 from meridian.encoder.artifact import load_embedder
 from meridian.encoder.embed import embed_documents
+from meridian.reranker.artifact import load_reranker
 from meridian.retrieval.ann import build_ann_index
 from meridian.retrieval.ann.base import VectorIndex
 from meridian.retrieval.dense import DenseRetriever
 from meridian.retrieval.embedding_index import EmbeddingIndex
 from meridian.retrieval.hybrid import HybridRetriever
 from meridian.retrieval.pipeline import BM25Retriever, Retriever
+from meridian.retrieval.rerank import RerankingRetriever
 from meridian.tokenization.artifact import load_tokenizer
 
 
@@ -64,11 +66,39 @@ def build_retriever(
     tokenizer_path: str | Path | None = None,
     index_dir: str | Path | None = None,
     ann: str = "none",
+    rerank: bool = False,
+    reranker_dir: str | Path | None = None,
 ) -> Retriever:
-    """Build the ``bm25`` or ``dense`` retriever.
+    """Build the ``bm25``/``dense``/``hybrid`` retriever, optionally reranked.
 
-    Raises :class:`ValueError` for an unknown ``kind`` or missing dense artifacts.
+    Raises :class:`ValueError` for an unknown ``kind`` or missing artifacts.
     """
+    base = _build_base_retriever(
+        kind,
+        store,
+        embedder_dir=embedder_dir,
+        tokenizer_path=tokenizer_path,
+        index_dir=index_dir,
+        ann=ann,
+    )
+    if not rerank:
+        return base
+    if reranker_dir is None or tokenizer_path is None:
+        raise ValueError("reranking requires --reranker and --tokenizer")
+    return RerankingRetriever(
+        base, load_reranker(reranker_dir), load_tokenizer(tokenizer_path), store
+    )
+
+
+def _build_base_retriever(
+    kind: str,
+    store: DocumentStore,
+    *,
+    embedder_dir: str | Path | None,
+    tokenizer_path: str | Path | None,
+    index_dir: str | Path | None,
+    ann: str,
+) -> Retriever:
     if kind == "bm25":
         return BM25Retriever.from_store(store)
     if kind in ("dense", "hybrid"):

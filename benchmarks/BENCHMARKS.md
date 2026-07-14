@@ -37,6 +37,7 @@ uv run python scripts/evaluate.py --db data/corpus.sqlite \
 | Retriever v2 (+hard neg, Phase 5) | TBD | TBD | TBD | TBD | TBD | TBD |
 | Hybrid RRF (Phase 5) | TBD | TBD | TBD | TBD | TBD | TBD |
 | Dense + rerank (Phase 6) | TBD | TBD | TBD | TBD | TBD | TBD |
+| Hybrid + rerank (Phase 6) | TBD | TBD | TBD | TBD | TBD | TBD |
 
 The harness and BM25 baseline are implemented and verified offline on the committed
 sample corpus/split; the real row is filled once the PubMed corpus and PubMedQA

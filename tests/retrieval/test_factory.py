@@ -12,11 +12,13 @@ from meridian.corpus.records import Document
 from meridian.corpus.store import SqliteDocumentStore
 from meridian.encoder.artifact import EmbedderConfig, build_embedder, load_embedder, save_embedder
 from meridian.encoder.embed import embed_documents
+from meridian.reranker.artifact import RerankerConfig, build_reranker, save_reranker
 from meridian.retrieval.dense import DenseRetriever
 from meridian.retrieval.embedding_index import EmbeddingIndex
 from meridian.retrieval.factory import build_dense_retriever, build_retriever
 from meridian.retrieval.hybrid import HybridRetriever
 from meridian.retrieval.pipeline import BM25Retriever
+from meridian.retrieval.rerank import RerankingRetriever
 from meridian.tokenization.artifact import save_tokenizer
 from meridian.tokenization.training import train_tokenizer
 
@@ -99,6 +101,33 @@ def test_build_hybrid(tmp_path: Path) -> None:
 def test_hybrid_missing_artifacts_rejected() -> None:
     with _store() as store, pytest.raises(ValueError):
         build_retriever("hybrid", store)
+
+
+def test_rerank_missing_artifacts_rejected() -> None:
+    with _store() as store, pytest.raises(ValueError):
+        build_retriever("bm25", store, rerank=True)
+
+
+def test_build_bm25_with_rerank(tmp_path: Path) -> None:
+    _, tok_path, tok = _artifacts(tmp_path)
+    rr_dir = tmp_path / "reranker"
+    torch.manual_seed(0)
+    config = RerankerConfig(
+        vocab_size=tok.vocabulary.size,
+        embed_dim=16,
+        num_heads=2,
+        num_layers=1,
+        ff_dim=32,
+        max_len=64,
+        pad_id=tok.vocabulary.pad_id or 0,
+    )
+    save_reranker(build_reranker(config), config, rr_dir)
+    with _store() as store:
+        retriever = build_retriever(
+            "bm25", store, tokenizer_path=tok_path, rerank=True, reranker_dir=rr_dir
+        )
+        assert isinstance(retriever, RerankingRetriever)
+        assert len(retriever.retrieve("heart failure", k=1)) == 1
 
 
 def test_dense_with_prebuilt_index(tmp_path: Path) -> None:

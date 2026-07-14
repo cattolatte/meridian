@@ -20,8 +20,11 @@ from meridian.corpus.store import SqliteDocumentStore
 from meridian.eval.harness import log_to_mlflow, run_evaluation, write_results
 from meridian.eval.qrels import load_eval_set
 from meridian.eval.splits import load_frozen_split
+from meridian.reranker.artifact import load_reranker
 from meridian.retrieval.factory import build_retriever
 from meridian.retrieval.pipeline import BM25Retriever, Retriever
+from meridian.retrieval.rerank import RerankingRetriever
+from meridian.tokenization.artifact import load_tokenizer
 
 
 def _require(parser: argparse.ArgumentParser, value: Path | None, flag: str) -> Path:
@@ -50,6 +53,10 @@ def main() -> None:
     parser.add_argument(
         "--ann", choices=("none", "ivf", "hnsw"), default="none", help="ANN search backend (dense)"
     )
+    parser.add_argument(
+        "--rerank", action="store_true", help="rerank candidates with the cross-encoder"
+    )
+    parser.add_argument("--reranker", type=Path, help="reranker artifact dir (with --rerank)")
     parser.add_argument("--mlflow-experiment", help="log metrics to this MLflow experiment")
     args = parser.parse_args()
 
@@ -67,6 +74,13 @@ def main() -> None:
                 tokenizer_path=_require(parser, args.tokenizer, "--tokenizer"),
                 index_dir=args.index,
                 ann=args.ann,
+            )
+        if args.rerank:
+            retriever = RerankingRetriever(
+                retriever,
+                load_reranker(_require(parser, args.reranker, "--reranker")),
+                load_tokenizer(_require(parser, args.tokenizer, "--tokenizer")),
+                store,
             )
         result = run_evaluation(retriever, eval_set)
 

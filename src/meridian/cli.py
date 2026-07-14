@@ -63,6 +63,8 @@ def _run_ask(args: argparse.Namespace) -> int:
                 tokenizer_path=args.tokenizer,
                 index_dir=args.index,
                 ann=args.ann,
+                rerank=args.rerank,
+                reranker_dir=args.reranker,
             )
         except ValueError as error:
             print(str(error))
@@ -101,6 +103,10 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument(
         "--ann", choices=("none", "ivf", "hnsw"), default="none", help="ANN search backend (dense)"
     )
+    ask.add_argument(
+        "--rerank", action="store_true", help="rerank candidates with the cross-encoder"
+    )
+    ask.add_argument("--reranker", type=Path, help="reranker artifact dir (with --rerank)")
     ask.add_argument("--passages", type=int, default=5, help="passages to retrieve")
     ask.add_argument("--sentences", type=int, default=3, help="cited sentences to return")
     ask.set_defaults(func=_run_ask)
