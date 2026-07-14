@@ -7,7 +7,8 @@ exact ground truth their recall is measured against. No external ANN library is 
 """
 
 from meridian.retrieval.ann.base import VectorIndex
+from meridian.retrieval.ann.hnsw import HNSWIndex
 from meridian.retrieval.ann.ivf import IVFIndex
 from meridian.retrieval.ann.kmeans import kmeans
 
-__all__ = ["IVFIndex", "VectorIndex", "kmeans"]
+__all__ = ["HNSWIndex", "IVFIndex", "VectorIndex", "kmeans"]
