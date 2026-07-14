@@ -19,6 +19,7 @@ from meridian.retrieval.ann import build_ann_index
 from meridian.retrieval.ann.base import VectorIndex
 from meridian.retrieval.dense import DenseRetriever
 from meridian.retrieval.embedding_index import EmbeddingIndex
+from meridian.retrieval.hybrid import HybridRetriever
 from meridian.retrieval.pipeline import BM25Retriever, Retriever
 from meridian.tokenization.artifact import load_tokenizer
 
@@ -70,14 +71,17 @@ def build_retriever(
     """
     if kind == "bm25":
         return BM25Retriever.from_store(store)
-    if kind == "dense":
+    if kind in ("dense", "hybrid"):
         if embedder_dir is None or tokenizer_path is None:
-            raise ValueError("dense retrieval requires --embedder and --tokenizer")
-        return build_dense_retriever(
+            raise ValueError(f"{kind} retrieval requires --embedder and --tokenizer")
+        dense = build_dense_retriever(
             store,
             embedder_dir=embedder_dir,
             tokenizer_path=tokenizer_path,
             index_dir=index_dir,
             ann=ann,
         )
+        if kind == "dense":
+            return dense
+        return HybridRetriever([BM25Retriever.from_store(store), dense], store)
     raise ValueError(f"unknown retriever kind: {kind!r}")

@@ -20,7 +20,7 @@ from meridian.corpus.store import SqliteDocumentStore
 from meridian.eval.harness import log_to_mlflow, run_evaluation, write_results
 from meridian.eval.qrels import load_eval_set
 from meridian.eval.splits import load_frozen_split
-from meridian.retrieval.factory import build_dense_retriever
+from meridian.retrieval.factory import build_retriever
 from meridian.retrieval.pipeline import BM25Retriever, Retriever
 
 
@@ -37,7 +37,10 @@ def main() -> None:
     parser.add_argument("--checksum", help="expected split checksum (enforces the frozen guard)")
     parser.add_argument("--out", type=Path, help="write JSON results here")
     parser.add_argument(
-        "--retriever", choices=("bm25", "dense"), default="bm25", help="retrieval backend"
+        "--retriever",
+        choices=("bm25", "dense", "hybrid"),
+        default="bm25",
+        help="retrieval backend (hybrid = RRF of BM25 + dense)",
     )
     parser.add_argument("--k1", type=float, default=1.5)
     parser.add_argument("--b", type=float, default=0.75)
@@ -57,7 +60,8 @@ def main() -> None:
         if args.retriever == "bm25":
             retriever: Retriever = BM25Retriever.from_store(store, k1=args.k1, b=args.b)
         else:
-            retriever = build_dense_retriever(
+            retriever = build_retriever(
+                args.retriever,
                 store,
                 embedder_dir=_require(parser, args.embedder, "--embedder"),
                 tokenizer_path=_require(parser, args.tokenizer, "--tokenizer"),

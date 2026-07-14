@@ -15,6 +15,7 @@ from meridian.encoder.embed import embed_documents
 from meridian.retrieval.dense import DenseRetriever
 from meridian.retrieval.embedding_index import EmbeddingIndex
 from meridian.retrieval.factory import build_dense_retriever, build_retriever
+from meridian.retrieval.hybrid import HybridRetriever
 from meridian.retrieval.pipeline import BM25Retriever
 from meridian.tokenization.artifact import save_tokenizer
 from meridian.tokenization.training import train_tokenizer
@@ -85,6 +86,21 @@ def test_build_dense_with_ann_backend(tmp_path: Path, ann: str) -> None:
         )
         assert isinstance(retriever, DenseRetriever)
         assert len(retriever.retrieve("diabetes", k=2)) == 2
+
+
+def test_build_hybrid(tmp_path: Path) -> None:
+    emb_dir, tok_path, _ = _artifacts(tmp_path)
+    with _store() as store:
+        retriever = build_retriever(
+            "hybrid", store, embedder_dir=emb_dir, tokenizer_path=tok_path
+        )
+        assert isinstance(retriever, HybridRetriever)
+        assert len(retriever.retrieve("heart failure", k=2)) == 2
+
+
+def test_hybrid_missing_artifacts_rejected() -> None:
+    with _store() as store, pytest.raises(ValueError):
+        build_retriever("hybrid", store)
 
 
 def test_dense_with_prebuilt_index(tmp_path: Path) -> None:

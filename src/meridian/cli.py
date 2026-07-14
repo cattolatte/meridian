@@ -90,7 +90,10 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("question", help="the question to answer")
     ask.add_argument("--db", type=Path, required=True, help="SQLite document store path")
     ask.add_argument(
-        "--retriever", choices=("bm25", "dense"), default="bm25", help="retrieval backend"
+        "--retriever",
+        choices=("bm25", "dense", "hybrid"),
+        default="bm25",
+        help="retrieval backend (hybrid = RRF of BM25 + dense)",
     )
     ask.add_argument("--embedder", type=Path, help="trained embedder artifact dir (dense)")
     ask.add_argument("--tokenizer", type=Path, help="tokenizer artifact path (dense)")
