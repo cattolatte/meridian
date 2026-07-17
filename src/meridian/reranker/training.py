@@ -29,9 +29,13 @@ def train_reranker(
     batch_size: int = 16,
     learning_rate: float = 1e-3,
     max_length: int = 256,
+    device: torch.device | str | None = None,
     seed: int = 0,
 ) -> list[float]:
     """Train ``model`` on pointwise pair ``samples``; return per-epoch mean losses.
+
+    ``device`` moves the model and batches onto an accelerator (CUDA/MPS); ``None`` keeps
+    them on CPU.
 
     Raises :class:`ValueError` if ``samples`` is empty.
     """
@@ -49,6 +53,9 @@ def train_reranker(
         )
         for start in range(0, len(samples), batch_size)
     ]
+    if device is not None:
+        model.to(device)
+        batches = [batch.to(device) for batch in batches]
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = nn.BCEWithLogitsLoss()
 

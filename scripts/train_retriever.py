@@ -24,6 +24,8 @@ from pathlib import Path
 import torch
 
 from meridian.corpus.store import SqliteDocumentStore
+from meridian.data import load_msmarco_triples, load_pqa_pairs, msmarco_pairs_from_triples
+from meridian.device import resolve_device
 from meridian.encoder.artifact import EmbedderConfig, build_embedder, save_embedder
 from meridian.encoder.data import make_contrastive_samples, mine_title_abstract_pairs
 from meridian.encoder.pretrain import build_mlm, initialize_from_mlm, mlm_pretrain
@@ -49,6 +51,13 @@ def main() -> None:
     parser.add_argument("--out", type=Path, required=True, help="output embedder artifact dir")
     parser.add_argument("--pairs", type=Path, help="TSV of anchor<TAB>positive contrastive pairs")
     parser.add_argument(
+        "--pqa", type=Path, help="PubMedQA JSON (PQA-A/L) -> question/context pairs"
+    )
+    parser.add_argument(
+        "--msmarco-triples", type=Path, help="MS MARCO triples TSV -> (query, positive) pairs"
+    )
+    parser.add_argument("--max-pairs", type=int, help="cap examples per source (smoke runs)")
+    parser.add_argument(
         "--mine-title-abstract", action="store_true", help="add (title, abstract) pairs"
     )
     parser.add_argument("--random-init", action="store_true", help="skip Stage-0 MLM (ablation)")
@@ -56,9 +65,14 @@ def main() -> None:
     parser.add_argument("--num-layers", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--mlm-epochs", type=int, default=1)
+    parser.add_argument(
+        "--device", default="auto", help="auto | cpu | cuda | mps (scale runs: cuda)"
+    )
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
+    device = resolve_device(args.device)
+    print(f"device: {device}")
     tokenizer, mask_id = ensure_mask_token(load_tokenizer(args.tokenizer))
     config = EmbedderConfig(
         vocab_size=tokenizer.vocabulary.size,
@@ -70,12 +84,17 @@ def main() -> None:
     pairs: list[tuple[str, str]] = []
     if args.pairs is not None:
         pairs += _read_pairs(args.pairs)
+    if args.pqa is not None:
+        pairs += load_pqa_pairs(args.pqa, max_examples=args.max_pairs)
+    if args.msmarco_triples is not None:
+        triples = load_msmarco_triples(args.msmarco_triples, max_examples=args.max_pairs)
+        pairs += msmarco_pairs_from_triples(triples)
     with SqliteDocumentStore(args.db) as store:
         if args.mine_title_abstract:
             pairs += mine_title_abstract_pairs(store.iter_documents())
         corpus_texts = [doc.chunk_text() for doc in store.iter_documents()]
     if not pairs:
-        parser.error("no training pairs (pass --pairs and/or --mine-title-abstract)")
+        parser.error("no training pairs (pass --pairs / --pqa / --msmarco-triples / --mine-*)")
 
     torch.manual_seed(args.seed)
     embedder = build_embedder(config)
@@ -88,6 +107,7 @@ def main() -> None:
             mask_id=mask_id,
             vocab_size=config.vocab_size,
             epochs=args.mlm_epochs,
+            device=device,
             seed=args.seed,
         )
         initialize_from_mlm(mlm, embedder)
@@ -95,7 +115,7 @@ def main() -> None:
 
     samples = make_contrastive_samples(pairs, tokenizer)
     losses = train_retriever(
-        embedder, samples, pad_id=config.pad_id, epochs=args.epochs, seed=args.seed
+        embedder, samples, pad_id=config.pad_id, epochs=args.epochs, device=device, seed=args.seed
     )
     print(f"contrastive training on {len(samples)} pairs; final loss {losses[-1]:.4f}")
 

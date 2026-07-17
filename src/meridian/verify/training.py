@@ -29,6 +29,7 @@ def train_verifier(
     learning_rate: float = 1e-3,
     max_length: int = 256,
     class_weights: Sequence[float] | None = None,
+    device: torch.device | str | None = None,
     seed: int = 0,
 ) -> list[float]:
     """Train ``model`` on NLI ``samples``; return per-epoch mean cross-entropy losses.
@@ -54,8 +55,13 @@ def train_verifier(
         )
         for start in range(0, len(samples), batch_size)
     ]
+    if device is not None:
+        model.to(device)
+        batches = [batch.to(device) for batch in batches]
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     weight = torch.tensor(class_weights, dtype=torch.float) if class_weights else None
+    if weight is not None and device is not None:
+        weight = weight.to(device)
     loss_fn = nn.CrossEntropyLoss(weight=weight)
 
     model.train()

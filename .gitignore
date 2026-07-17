@@ -22,7 +22,8 @@ htmlcov/
 mlruns/
 
 # Data & model artifacts (rebuilt from scripts, never committed)
-data/
+# Anchored to repo root so the src/meridian/data package and tests/data are NOT ignored.
+/data/
 artifacts/
 build/
 *.ckpt

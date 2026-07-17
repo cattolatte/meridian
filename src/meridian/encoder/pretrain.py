@@ -46,15 +46,21 @@ def mlm_pretrain(
     max_length: int = 256,
     learning_rate: float = 1e-3,
     mask_probability: float = 0.15,
+    device: torch.device | str | None = None,
     seed: int = 0,
 ) -> tuple[PretrainEpoch, ...]:
     """MLM-pretrain ``model`` on ``texts``; return per-epoch metrics.
+
+    ``device`` moves the model onto an accelerator (CUDA/MPS) before training; Polaris'
+    ``pretrain`` follows the model's device for each batch. ``None`` keeps it on CPU.
 
     Raises :class:`ValueError` if ``texts`` is empty.
     """
     if not texts:
         raise ValueError("no texts to pretrain on")
 
+    if device is not None:
+        model.to(device)
     pad_id = tokenizer.vocabulary.pad_id or 0
     encodings = [tokenizer.encode(text) for text in texts]
     batches = [

@@ -41,8 +41,13 @@ def encode_texts(
     *,
     max_length: int = 256,
     batch_size: int = 32,
+    device: torch.device | str | None = None,
 ) -> npt.NDArray[np.float32]:
-    """Encode ``texts`` into an ``(N, D)`` float32 embedding matrix."""
+    """Encode ``texts`` into an ``(N, D)`` float32 embedding matrix.
+
+    ``device`` moves the embedder and inputs onto an accelerator (CUDA/MPS); vectors are
+    always returned as a CPU float32 array. ``None`` keeps the model where it is.
+    """
     if not texts:
         return np.zeros((0, embedder.embedding_dim), dtype=np.float32)
 
@@ -50,6 +55,8 @@ def encode_texts(
     if pad_id is None:
         pad_id = 0
 
+    if device is not None:
+        embedder.to(device)
     embedder.eval()
     chunks: list[npt.NDArray[np.float32]] = []
     with torch.no_grad():
@@ -57,6 +64,9 @@ def encode_texts(
             batch = texts[start : start + batch_size]
             id_lists = [list(tokenizer.encode(text).ids) for text in batch]
             input_ids, attention_mask = _pad_batch(id_lists, pad_id=pad_id, max_length=max_length)
+            if device is not None:
+                input_ids = input_ids.to(device)
+                attention_mask = attention_mask.to(device)
             vectors = embedder.encode(input_ids, attention_mask)
             chunks.append(vectors.detach().cpu().to(torch.float32).numpy())
     return np.concatenate(chunks, axis=0)
@@ -69,10 +79,13 @@ def embed_documents(
     *,
     max_length: int = 256,
     batch_size: int = 32,
+    device: torch.device | str | None = None,
 ) -> tuple[list[str], npt.NDArray[np.float32]]:
     """Embed each document's chunk text; return parallel PMIDs and the matrix."""
     docs = list(documents)
     pmids = [doc.pmid for doc in docs]
     texts = [doc.chunk_text() for doc in docs]
-    vectors = encode_texts(embedder, tokenizer, texts, max_length=max_length, batch_size=batch_size)
+    vectors = encode_texts(
+        embedder, tokenizer, texts, max_length=max_length, batch_size=batch_size, device=device
+    )
     return pmids, vectors

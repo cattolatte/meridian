@@ -29,15 +29,22 @@ def train_retriever(
     temperature: float = 0.05,
     max_length: int = 256,
     symmetric: bool = True,
+    device: torch.device | str | None = None,
     seed: int = 0,
 ) -> list[float]:
     """Train ``embedder`` on contrastive ``samples``; return per-epoch losses.
+
+    ``device`` moves the embedder onto an accelerator (CUDA/MPS) before training; Polaris'
+    ``train_contrastive`` then follows the model's device for each batch. ``None`` keeps
+    the model where it is (CPU by default).
 
     Raises :class:`ValueError` if ``samples`` is empty.
     """
     if not samples:
         raise ValueError("no contrastive samples to train on")
 
+    if device is not None:
+        embedder.to(device)
     batches = [
         collate_contrastive(
             samples[start : start + batch_size], pad_id=pad_id, max_length=max_length
