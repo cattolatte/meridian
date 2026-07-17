@@ -18,8 +18,35 @@
 
 ## Status
 
-Pre-alpha (`v0.0.1`) — Phase 0: scaffolding. The system is built in strictly
-ordered vertical slices; end-to-end question answering ships from `v0.1.0`.
+Built in strictly ordered vertical slices; `meridian ask` answers end-to-end from
+`v0.1.0`. Every ML component (tokenizer, dense retriever, IVF/HNSW index, reranker,
+grounded generator, NLI verifier, answerability gate) is **implemented and trained by a
+committed, seeded pipeline**, verified offline on a tiny sample. The **real quality
+numbers require the PubMed/PubMedQA/MS MARCO downloads and MPS/CUDA training runs** — a
+deliberate, networked step the user runs; until then benchmark cells read `TBD` (numbers
+are never written from memory). See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+
+## Architecture (online path)
+
+```mermaid
+flowchart TD
+    Q[query] --> BM[BM25 / dense bi-encoder / hybrid RRF]
+    BM --> ANN[ANN index: brute-force / IVF / HNSW]
+    ANN --> RR[cross-encoder reranker: top-100 -> top-k]
+    RR --> G1{Gate 1: retrieval confidence}
+    G1 -- low --> AB[ABSTAIN: show nearest passages]
+    G1 --> G2{Gate 2: answerability}
+    G2 -- no --> AB
+    G2 --> GEN[Zenith generator: citation-constrained decoding]
+    GEN --> V{Gate 3: NLI faithfulness verifier}
+    V -- pass --> OK[respond: GROUNDED, cited]
+    V -- fail --> EX[extractive fallback -> or ABSTAIN]
+```
+
+Every ML box is a from-scratch model: encoders/reranker/verifier are
+[Polaris](https://github.com/cattolatte/Polaris); the generator is
+[Zenith](https://github.com/cattolatte/zenith-nlp-framework); BM25, the ANN indexes,
+serving, and the eval harness are built in this repo on PyTorch/NumPy primitives.
 
 ## Design principles
 
@@ -75,6 +102,39 @@ uv run pytest
 
 Quality gates (enforced in CI and pre-commit): Black, Ruff, `mypy --strict`,
 pytest with ≥ 90% coverage. Tests never touch the network.
+
+## Serving
+
+```bash
+uv sync --extra serving
+uv run python scripts/serve.py --db build/corpus.sqlite   # FastAPI on :8000
+# or the whole demo stack (API + static UI):
+docker compose up
+```
+
+`/ask` returns a cited answer (or abstains), `/passages` the retrieved passages,
+`/ask/stream` the same over SSE, `/metrics` per-stage latency. The zero-framework demo
+UI (`demo/index.html`) shows the answer, clickable PubMed citations, a GROUNDED/ABSTAIN
+badge, and the "not medical advice" banner.
+
+## Guardrails — what this is *not*
+
+Mirrors the discipline of Polaris/Zenith; these are house rules, not marketing.
+
+- **Not medical advice.** A research-literature assistant. Answers are restricted to what
+  retrieved literature states, with citations; personal-advice/off-domain questions abstain.
+- **Production-*inspired*, never "production-grade."** Laptop-scale corpus and small
+  models (encoders ~10–30M, generator ~30–125M). The design compensates with grounding,
+  extractive fallback, and abstention — the generator's quality is *additive, not
+  load-bearing*.
+- **No number without a script.** A metric appears in the README/BENCHMARKS only if a
+  committed, seeded script reproduces it, with its MLflow run id. TBD cells stay TBD until
+  the real run — never estimated in prose.
+- **Not a vector-DB wrapper.** The ANN index (brute-force → IVF → HNSW) is implemented and
+  benchmarked here against its own brute-force ground truth. Zero external NLP-model or
+  vector-DB dependencies.
+
+See [MODEL_CARD.md](MODEL_CARD.md) for scope, intended use, and limitations.
 
 ## License
 

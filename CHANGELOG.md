@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 12 — v1.0 docs & demo (release gated on the real training campaign).**
+  - README: architecture diagram (online path), serving quickstart, a guardrails
+    section, and an honest status note; MODEL_CARD component statuses updated to
+    "implemented (untrained on real data)". The v1.0.0 / PyPI release is deliberately
+    deferred until the real benchmark numbers exist (claims hygiene + release rules).
 - **Phase 11 — evaluation campaign + error attribution.**
   - `meridian.eval.attribution`: oracle-substitution error attribution
     (`attribute_failure` / `attribution_study`) blaming each wrong answer on the

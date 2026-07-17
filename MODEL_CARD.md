@@ -22,18 +22,26 @@
 
 ## Components
 
+Every component's training/inference pipeline is **implemented and tested offline**;
+each is trained on real data by a committed, seeded script (not yet run at scale).
+
 | Component | Framework | Size | Status |
 |---|---|---|---|
-| BPE tokenizer | Polaris | — | TBD (Phase 1) |
-| Bi-encoder retriever | Polaris | ~10–30M | TBD (Phase 3) |
-| Cross-encoder reranker | Polaris | ~10–30M | TBD (Phase 6) |
-| Answerability gate | Polaris | shares reranker | TBD (Phase 9) |
-| NLI faithfulness verifier | Polaris | ~10–30M | TBD (Phase 8) |
-| Grounded generator | Zenith | ~30–125M | TBD (Phase 7) |
+| BPE tokenizer | Polaris | — | implemented (mixed-corpus BPE, versioned artifact) |
+| Bi-encoder retriever | Polaris | ~10–30M | implemented (MLM → contrastive; brute/IVF/HNSW) |
+| Cross-encoder reranker | Polaris | ~10–30M | implemented (pointwise BCE pair scorer) |
+| Answerability gate | Polaris | shares pair head | implemented (2-class) |
+| NLI faithfulness verifier | Polaris | ~10–30M | implemented (3-class entailment) |
+| Grounded generator | Zenith | ~30–125M | implemented (LoRA SFT, citation-constrained decoding, abstain) |
+
+"Implemented" = the model, training, and inference run end-to-end offline on a tiny
+sample; documented **quality numbers require the real training runs** (deferred).
 
 ## Evaluation
 
-TBD — populated from the harness (retrieval, faithfulness, calibration, latency).
+Populated from the harness (retrieval, faithfulness, calibration, latency) once the real
+corpus is ingested and the components are trained. Every cell is reproducible from a
+committed script; no number is estimated. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
 ## Limitations & risks
 
