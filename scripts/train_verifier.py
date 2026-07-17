@@ -19,6 +19,7 @@ import argparse
 from pathlib import Path
 
 import torch
+from polaris.collation import collate_pairs
 
 from meridian.data import load_nli_jsonl
 from meridian.device import resolve_device
@@ -42,6 +43,10 @@ def main() -> None:
     parser.add_argument("--hypothesis-field", default="sentence2")
     parser.add_argument("--label-field", default="gold_label")
     parser.add_argument("--max-examples", type=int, help="cap per file (smoke runs)")
+    parser.add_argument(
+        "--eval-nli", type=Path, action="append", help="held-out NLI JSONL to score (repeatable)"
+    )
+    parser.add_argument("--eval-max", type=int, default=5000, help="cap eval examples per file")
     parser.add_argument("--random-init", action="store_true", help="skip Stage-0 MLM (ablation)")
     parser.add_argument("--embed-dim", type=int, default=256)
     parser.add_argument("--num-layers", type=int, default=4)
@@ -120,6 +125,36 @@ def main() -> None:
         metadata={"num_examples": len(examples), "epochs": args.epochs, "final_loss": losses[-1]},
     )
     print(f"wrote verifier artifact -> {args.out}")
+
+    for dev_path in args.eval_nli or []:
+        dev = load_nli_jsonl(
+            dev_path,
+            premise_field=args.premise_field,
+            hypothesis_field=args.hypothesis_field,
+            label_field=args.label_field,
+            max_examples=args.eval_max,
+        )
+        if not dev:
+            print(f"eval {dev_path.name}: no labeled examples")
+            continue
+        verifier.eval()
+        correct = 0
+        for start in range(0, len(dev), 64):
+            chunk = dev[start : start + 64]
+            batch = collate_pairs(
+                make_nli_samples(chunk, tokenizer),
+                pad_id=pad_id,
+                cls_id=tokenizer.vocabulary.cls_id,
+                sep_id=tokenizer.vocabulary.sep_id,
+                max_length=256,
+            )
+            if device is not None:
+                batch = batch.to(device)
+            with torch.no_grad():
+                preds = verifier(batch).argmax(dim=-1).cpu()
+            gold = torch.tensor([label for _, _, label in chunk])
+            correct += int((preds == gold).sum())
+        print(f"eval {dev_path.name}: accuracy {correct / len(dev):.4f} (n={len(dev)})")
 
 
 if __name__ == "__main__":
