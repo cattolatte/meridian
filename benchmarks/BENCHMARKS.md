@@ -109,21 +109,36 @@ off-domain abstain rate come from the trained gates on the frozen dev split.
 ## End-to-end (Phase 11)
 
 PubMedQA PQA-L labels (n=1000): yes 552 / no 338 / maybe 110 → **majority-class baseline
-0.552** (the denominator the full pipeline's yes/no/maybe accuracy must beat). The
-full-pipeline accuracy needs the trained generator/answerability models.
+0.552**. A from-scratch 3-class classifier (Polaris pair head over question+context,
+64-dim, trained on 808 examples, evaluated on 192) reaches **0.495** — reproduce with
+`scripts/train_pubmedqa_classifier.py`.
 
-| Metric | Value | Run ID |
+| Metric | Value | Run |
 |---|---|---|
-| PubMedQA majority-class baseline | 0.552 | scripts/build_pubmedqa.py |
-| PubMedQA accuracy (yes/no/maybe, full pipeline) | TBD | TBD |
-| Answer coverage @ operating point | TBD | TBD |
+| PubMedQA majority-class baseline (eval split) | 0.547 | build_pubmedqa.py |
+| PubMedQA accuracy (from-scratch 3-class classifier) | **0.495** | train_pubmedqa_classifier.py |
+| PubMedQA accuracy (full pipeline, trained at scale) | TBD | — |
+| Answer coverage @ operating point | TBD | — |
+
+**Honest finding (below baseline).** The from-scratch classifier does **not** beat the
+majority baseline — 800 examples and a tiny randomly-initialized model are far too little
+for a reasoning task where published results (~68–78%) use large *pretrained* models. This
+is the project's honest scope (RAG.md §2): a laptop-scale, from-scratch system is **not
+accuracy-competitive with large models**, and does not pretend to be. Its value is the
+*engineering and safety design* — grounded, citation-constrained generation; NLI
+verification; calibrated abstention — not a headline accuracy number. The path to a real
+number is MLM pretraining + the full training sets, which the pipeline implements but has
+not run at scale.
 
 ## Systems / latency (Phase 10)
 
-| Stage | P50 | P95 | Run ID |
+Measured over 527 real PubMedQA dev queries on the 1000-abstract corpus
+(`scripts/benchmark_latency.py`). Search = BM25 top-k; Answer = extractive answerer
+(retrieve + sentence scoring). Embed / rerank / generate / verify latencies are added
+once those models are trained.
+
+| Stage | P50 | P95 | n |
 |---|---|---|---|
-| Embed | TBD | TBD | TBD |
-| Search | TBD | TBD | TBD |
-| Rerank | TBD | TBD | TBD |
-| Generate | TBD | TBD | TBD |
-| Verify | TBD | TBD | TBD |
+| Search (BM25) | 0.84 ms | 1.36 ms | 527 |
+| Answer (extractive) | 1.12 ms | 1.54 ms | 527 |
+| Embed / Rerank / Generate / Verify | TBD | TBD | — |
