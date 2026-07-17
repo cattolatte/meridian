@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 11 — evaluation campaign + error attribution.**
+  - `meridian.eval.attribution`: oracle-substitution error attribution
+    (`attribute_failure` / `attribution_study`) blaming each wrong answer on the
+    earliest pipeline stage an oracle repairs.
+  - `meridian.eval.pubmedqa.pubmedqa_accuracy`: the yes/no/maybe headline scorer.
+  - `docs/design/error-attribution.md` (method + pending real results).
 - **Phase 10 — serving & performance.**
   - `meridian.serving`: a FastAPI app (`/health`, `/passages`, `/ask`, SSE
     `/ask/stream`, `/metrics`) over the retrieval + extractive-answer pipeline, with

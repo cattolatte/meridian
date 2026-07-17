@@ -15,10 +15,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 from meridian.eval.qrels import EvalQuery, EvalSet
+
+PUBMEDQA_LABELS = ("yes", "no", "maybe")
 
 
 def load_pubmedqa(path: str | Path) -> dict[str, Any]:
@@ -68,3 +71,20 @@ def split_dev_test(
         EvalSet(name=f"{eval_set.name}-dev", queries=tuple(dev)),
         EvalSet(name=f"{eval_set.name}-test", queries=tuple(test)),
     )
+
+
+def pubmedqa_accuracy(
+    predictions: Mapping[str, str],
+    gold: Mapping[str, str],
+) -> float:
+    """Accuracy of yes/no/maybe predictions against gold labels (RAG.md §7 headline).
+
+    Scored over the ids present in ``gold``; a missing or malformed prediction counts as
+    wrong. Raises :class:`ValueError` if ``gold`` is empty.
+    """
+    if not gold:
+        raise ValueError("no gold labels to score against")
+    correct = sum(
+        1 for qid, label in gold.items() if predictions.get(qid, "").lower() == label.lower()
+    )
+    return correct / len(gold)
