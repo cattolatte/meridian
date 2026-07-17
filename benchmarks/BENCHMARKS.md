@@ -68,6 +68,9 @@ the Phase-3 embeddings (no number written from memory).
 
 ## Faithfulness (Phase 8)
 
+Computed by `meridian.verify.verify_grounded_answer` (NLI entailment of each cited
+sentence). Real values come from the trained verifier over real generated answers.
+
 | Metric | Value | Run ID |
 |---|---|---|
 | Citation precision | TBD | TBD |

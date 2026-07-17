@@ -94,7 +94,10 @@ def _parse_citations(
     return tuple(citations)
 
 
-def render_grounded_answer(answer: GroundedAnswer) -> str:
+_DEFAULT_CONFIDENCE = "GENERATED (citations constrained to retrieved passages; unverified)"
+
+
+def render_grounded_answer(answer: GroundedAnswer, *, confidence: str = _DEFAULT_CONFIDENCE) -> str:
     """Render a :class:`GroundedAnswer` for the CLI, with the required banner."""
     lines: list[str] = []
     if answer.abstained:
@@ -109,9 +112,7 @@ def render_grounded_answer(answer: GroundedAnswer) -> str:
         lines.append("Sources:")
         lines += [f"  [{n}] PMID {pmid} — {title}" for n, pmid, title in answer.citations]
         lines.append("")
-        lines.append(
-            "Confidence: GENERATED (citations constrained to retrieved passages; unverified)"
-        )
+        lines.append(f"Confidence: {confidence}")
     lines.append("")
     lines.append(_NOT_MEDICAL_ADVICE)
     return "\n".join(lines)

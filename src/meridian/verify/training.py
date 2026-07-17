@@ -1,0 +1,66 @@
+"""Train the NLI verifier (3-class cross-entropy).
+
+Batches ``(premise, hypothesis, label)`` samples with ``collate_pairs`` and optimizes
+cross-entropy over the three NLI classes. Initialize the model from the Stage-0 trunk
+before calling this.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+
+import torch
+from polaris.collation import collate_pairs
+from polaris.models import SentencePairClassifier
+from torch import nn
+
+from meridian.verify.data import NLISample
+
+
+def train_verifier(
+    model: SentencePairClassifier,
+    samples: Sequence[NLISample],
+    *,
+    pad_id: int,
+    cls_id: int,
+    sep_id: int,
+    epochs: int = 1,
+    batch_size: int = 16,
+    learning_rate: float = 1e-3,
+    max_length: int = 256,
+    seed: int = 0,
+) -> list[float]:
+    """Train ``model`` on NLI ``samples``; return per-epoch mean cross-entropy losses.
+
+    Raises :class:`ValueError` if ``samples`` is empty.
+    """
+    if not samples:
+        raise ValueError("no NLI samples to train on")
+
+    torch.manual_seed(seed)
+    batches = [
+        collate_pairs(
+            samples[start : start + batch_size],
+            pad_id=pad_id,
+            cls_id=cls_id,
+            sep_id=sep_id,
+            max_length=max_length,
+        )
+        for start in range(0, len(samples), batch_size)
+    ]
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    loss_fn = nn.CrossEntropyLoss()
+
+    model.train()
+    losses: list[float] = []
+    for _ in range(epochs):
+        epoch_loss = 0.0
+        for batch in batches:
+            optimizer.zero_grad()
+            logits = model(batch)  # (B, 3)
+            loss = loss_fn(logits, batch.labels.long())
+            loss.backward()
+            optimizer.step()
+            epoch_loss += float(loss.item())
+        losses.append(epoch_loss / len(batches))
+    return losses

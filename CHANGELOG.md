@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 8 — faithfulness verifier (NLI) + citation checking.**
+  - `meridian.verify`: NLI verifier (Polaris `SentencePairClassifier`,
+    `num_classes=3`) config/artifact, `make_nli_samples`, 3-class `train_verifier`;
+    `verify_grounded_answer` (per-sentence entailment of cited spans) with citation
+    precision / recall / hallucination-rate metrics; and `answer_with_verification`
+    — the fail-safe ladder (generate → verify → extractive fallback → abstain).
 - **Phase 7 — grounded generator (Zenith).**
   - Bumps the pin to `zenith-nlp==1.1.0` (constrained-decoding hook, `AllowedTokens`,
     `Generator.abstained`, `instruct.grounded`).
