@@ -112,24 +112,28 @@ off-domain abstain rate come from the trained gates on the frozen dev split.
 
 PubMedQA PQA-L labels (n=1000): yes 552 / no 338 / maybe 110 → **majority-class baseline
 0.552**. A from-scratch 3-class classifier (Polaris pair head over question+context,
-64-dim, trained on 808 examples, evaluated on 192) reaches **0.495** — reproduce with
+96-dim, trained on 808 examples, evaluated on 192) reaches **0.531** when it runs the same
+ADR-0004 Stage-0 MLM pretraining as the retriever — reproduce with
 `scripts/train_pubmedqa_classifier.py`.
 
 | Metric | Value | Run |
 |---|---|---|
 | PubMedQA majority-class baseline (eval split) | 0.547 | build_pubmedqa.py |
-| PubMedQA accuracy (from-scratch 3-class classifier) | **0.495** | train_pubmedqa_classifier.py |
+| PubMedQA accuracy (from-scratch 3-class, MLM-pretrained) | **0.531** | train_pubmedqa_classifier.py |
+| — ablation: same model, no Stage-0 pretraining | 0.495 | `... --no-pretrain` |
 | PubMedQA accuracy (full pipeline, trained at scale) | TBD | — |
 | Answer coverage @ operating point | TBD | — |
 
-**Honest finding (below baseline).** The from-scratch classifier does **not** beat the
-majority baseline — 800 examples and a tiny randomly-initialized model are far too little
-for a reasoning task where published results (~68–78%) use large *pretrained* models. This
-is the project's honest scope (RAG.md §2): a laptop-scale, from-scratch system is **not
-accuracy-competitive with large models**, and does not pretend to be. Its value is the
-*engineering and safety design* — grounded, citation-constrained generation; NLI
+**Honest finding (pretraining helps, still short of baseline).** Stage-0 MLM pretraining
+lifts the from-scratch classifier from **0.495 → 0.531** (+3.6 pts) — the *same* curriculum
+that gives the retriever its ~46× gain also helps the classifier, a consistent result. But
+it still does **not** beat the 0.547 majority baseline: 800 examples and a tiny model are
+far too little for a reasoning task where published results (~68–78%) use large *pretrained*
+models. This is the project's honest scope (RAG.md §2): a laptop-scale, from-scratch system
+is **not accuracy-competitive with large models**, and does not pretend to be. Its value is
+the *engineering and safety design* — grounded, citation-constrained generation; NLI
 verification; calibrated abstention — not a headline accuracy number. The path to a real
-number is MLM pretraining + the full training sets, which the pipeline implements but has
+number is this curriculum plus the full training sets, which the pipeline implements but has
 not run at scale.
 
 ## Systems / latency (Phase 10)
