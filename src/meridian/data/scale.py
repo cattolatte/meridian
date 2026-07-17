@@ -63,9 +63,7 @@ def msmarco_pairs_from_triples(
     return pairs
 
 
-def load_pqa_pairs(
-    path: str | Path, *, max_examples: int | None = None
-) -> list[tuple[str, str]]:
+def load_pqa_pairs(path: str | Path, *, max_examples: int | None = None) -> list[tuple[str, str]]:
     """Load ``(question, joined-contexts)`` retriever pairs from a PubMedQA JSON file."""
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     pairs: list[tuple[str, str]] = []

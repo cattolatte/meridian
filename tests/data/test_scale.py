@@ -62,10 +62,20 @@ def test_load_nli_jsonl_maps_labels_and_skips_ungraded(tmp_path: Path) -> None:
     path.write_text(
         "\n".join(
             [
-                json.dumps({"sentence1": "a cat sleeps", "sentence2": "an animal rests",
-                            "gold_label": "entailment"}),
-                json.dumps({"sentence1": "a cat sleeps", "sentence2": "a dog runs",
-                            "gold_label": "contradiction"}),
+                json.dumps(
+                    {
+                        "sentence1": "a cat sleeps",
+                        "sentence2": "an animal rests",
+                        "gold_label": "entailment",
+                    }
+                ),
+                json.dumps(
+                    {
+                        "sentence1": "a cat sleeps",
+                        "sentence2": "a dog runs",
+                        "gold_label": "contradiction",
+                    }
+                ),
                 json.dumps({"sentence1": "x", "sentence2": "y", "gold_label": "-"}),  # skipped
                 "",  # blank line skipped
                 json.dumps({"sentence1": "p", "sentence2": "q", "gold_label": "neutral"}),
