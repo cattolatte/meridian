@@ -80,7 +80,9 @@ class SqliteDocumentStore:
     """
 
     def __init__(self, path: str | Path) -> None:
-        self._conn = sqlite3.connect(str(path))
+        # check_same_thread=False lets the store back a threaded server (FastAPI runs
+        # sync endpoints in a threadpool); SQLite's default serialized mode is safe here.
+        self._conn = sqlite3.connect(str(path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute(_SCHEMA)
         self._conn.commit()

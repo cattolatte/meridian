@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meridian — grounded biomedical answers</title>
+  <style>
+    :root { color-scheme: light dark; --fg: #1a1a2e; --muted: #6b7280; --accent: #2b6cb0;
+            --ok: #276749; --warn: #9b2c2c; --card: #ffffff; --bg: #f6f7fb; }
+    @media (prefers-color-scheme: dark) {
+      :root { --fg: #e7e9ee; --muted: #9aa3b2; --card: #1b1e28; --bg: #12141c; }
+    }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.55 system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--fg); }
+    main { max-width: 760px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    h1 { margin: 0 0 .25rem; }
+    .sub { color: var(--muted); margin: 0 0 1.5rem; }
+    .banner { background: #fff3cd; color: #664d03; border: 1px solid #ffe69c;
+              padding: .5rem .75rem; border-radius: 8px; font-size: .9rem; margin-bottom: 1.25rem; }
+    @media (prefers-color-scheme: dark) { .banner { background: #3a2f00; color: #ffe69c; border-color: #5c4a00; } }
+    form { display: flex; gap: .5rem; }
+    input { flex: 1; padding: .7rem .9rem; border-radius: 8px; border: 1px solid #cbd5e0;
+            background: var(--card); color: var(--fg); font-size: 1rem; }
+    button { padding: .7rem 1.1rem; border: 0; border-radius: 8px; background: var(--accent);
+             color: #fff; font-size: 1rem; cursor: pointer; }
+    .card { background: var(--card); border-radius: 12px; padding: 1.1rem 1.25rem; margin-top: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .badge { display: inline-block; font-size: .78rem; font-weight: 600; padding: .15rem .55rem;
+             border-radius: 999px; }
+    .grounded { background: #c6f6d5; color: var(--ok); }
+    .abstain { background: #fed7d7; color: var(--warn); }
+    .answer p { margin: .4rem 0; }
+    sup a { color: var(--accent); text-decoration: none; }
+    .sources { margin-top: 1rem; border-top: 1px solid #e2e8f0; padding-top: .75rem; font-size: .92rem; }
+    .sources a { color: var(--accent); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Meridian</h1>
+    <p class="sub">Grounded question answering over biomedical literature. Every answer is cited, verified, or refused.</p>
+    <p class="banner">Research literature assistant. <strong>Not medical advice.</strong></p>
+
+    <form id="ask">
+      <input id="q" name="q" placeholder="Does metformin reduce cardiovascular mortality in type 2 diabetes?" autofocus />
+      <button type="submit">Ask</button>
+    </form>
+
+    <div id="out"></div>
+  </main>
+
+  <script>
+    // The API base — same host, port 8000 (see docker-compose.yml).
+    const API = (location.origin.replace(/:\d+$/, "") || "http://localhost") + ":8000";
+    const out = document.getElementById("out");
+
+    document.getElementById("ask").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const question = document.getElementById("q").value.trim();
+      if (!question) return;
+      out.innerHTML = '<div class="card muted">Retrieving…</div>';
+      try {
+        const res = await fetch(API + "/ask", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, k: 5 }),
+        });
+        render(await res.json());
+      } catch (err) {
+        out.innerHTML = '<div class="card abstain">Could not reach the API at ' + API + '. Is it running?</div>';
+      }
+    });
+
+    function esc(s) { return String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+    function render(data) {
+      if (data.abstained) {
+        const nearest = (data.nearest || []).map(p => `<li>PMID ${esc(p.pmid)} — ${esc(p.title || "")}</li>`).join("");
+        out.innerHTML = `<div class="card"><span class="badge abstain">ABSTAIN</span>
+          <p>The retrieved literature does not directly answer this question.</p>
+          ${nearest ? `<div class="sources"><strong>Nearest passages</strong><ul>${nearest}</ul></div>` : ""}
+          <p class="muted">${esc(data.disclaimer)}</p></div>`;
+        return;
+      }
+      const byPmid = Object.fromEntries((data.sources || []).map(s => [s.pmid, s]));
+      const answer = (data.sentences || []).map(s =>
+        `<p>${esc(s.text)} <sup><a href="https://pubmed.ncbi.nlm.nih.gov/${esc(s.pmid)}/" target="_blank" rel="noopener">[${s.citation}]</a></sup></p>`
+      ).join("");
+      const sources = (data.sources || []).map(s =>
+        `<li>[${s.citation}] <a href="https://pubmed.ncbi.nlm.nih.gov/${esc(s.pmid)}/" target="_blank" rel="noopener">PMID ${esc(s.pmid)}</a> — ${esc(s.title || "")}</li>`
+      ).join("");
+      out.innerHTML = `<div class="card"><span class="badge grounded">${esc(data.confidence)}</span>
+        <div class="answer">${answer}</div>
+        <div class="sources"><strong>Sources</strong><ul>${sources}</ul></div>
+        <p class="muted">${esc(data.disclaimer)}</p></div>`;
+    }
+  </script>
+</body>
+</html>

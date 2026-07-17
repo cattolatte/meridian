@@ -49,6 +49,8 @@ dependencies = [
 tracking = ["mlflow>=2.5"]
 # Plotting for the committed benchmark figures (scripts/benchmark_ann.py only).
 benchmark = ["matplotlib>=3.8"]
+# FastAPI serving layer (Phase 10).
+serving = ["fastapi>=0.104", "uvicorn[standard]>=0.24", "pydantic>=2.0"]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
@@ -56,6 +58,8 @@ dev = [
     "black>=24.0",
     "mypy>=1.10",
     "pre-commit>=3.7",
+    "fastapi>=0.104",
+    "httpx>=0.24",
 ]
 
 [project.scripts]
@@ -100,7 +104,7 @@ files = ["src", "tests", "scripts"]
 
 # Upstream frameworks / optional extras that ship no type stubs — don't fail on them.
 [[tool.mypy.overrides]]
-module = ["polaris.*", "zenith.*", "mlflow.*", "matplotlib.*"]
+module = ["polaris.*", "zenith.*", "mlflow.*", "matplotlib.*", "uvicorn.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 10 — serving & performance.**
+  - `meridian.serving`: a FastAPI app (`/health`, `/passages`, `/ask`, SSE
+    `/ask/stream`, `/metrics`) over the retrieval + extractive-answer pipeline, with
+    per-stage latency instrumentation (`StageTimer`).
+  - `scripts/serve.py`, `Dockerfile`, `docker-compose.yml` (api + demo UI + Postgres
+    profile), and a zero-framework `demo/index.html` (clickable citations,
+    GROUNDED/ABSTAIN badge, disclaimer). `serving` optional extra;
+    `SqliteDocumentStore` now serves a threaded server.
 - **Phase 9 — abstention & calibration.**
   - `meridian.abstain`: Gate 1 `RetrievalGate` (top score + top-1/top-k margin);
     Gate 2 answerability classifier (Polaris `SentencePairClassifier`,
