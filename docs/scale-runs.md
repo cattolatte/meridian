@@ -59,11 +59,16 @@ uv run python scripts/train_reranker.py --tokenizer artifacts/tokenizer.json \
     --out artifacts/reranker --embed-dim 256 --num-layers 4 --epochs 2 --device cuda
 
 # Verifier — SNLI + MultiNLI base, then SciNLI domain adaptation
+# --eval-nli scores accuracy on a held-out dev set after training (repeatable)
 uv run python scripts/train_verifier.py --tokenizer artifacts/tokenizer.json \
     --nli data/scale/snli_1.0/snli_1.0_train.jsonl \
     --nli data/scale/multinli_1.0/multinli_1.0_train.jsonl \
+    --eval-nli data/scale/snli_1.0/snli_1.0_dev.jsonl \
     --out artifacts/verifier --embed-dim 256 --num-layers 4 --epochs 2 --device cuda
 ```
+
+For a general-English tokenizer (better for SNLI/MultiNLI than a biomedical one), build the
+`--general` corpus from the NLI sentences themselves and lower `--mix-ratio` toward general.
 
 Smoke-check any driver first with tiny caps on your laptop, e.g. add
 `--max-examples 2000 --device auto --epochs 1`.

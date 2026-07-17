@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Real benchmark campaign on PubMedQA PQA-L.** A self-contained 1000-abstract retrieval
+  task (clean train/dev/test, no leakage): BM25 vs from-scratch dense vs reranker, a
+  seed-averaged Stage-0 ablation (`scripts/ablate_stage0.py`, `scripts/variance_dense.py`),
+  the PubMedQA yes/no/maybe classifier (`scripts/train_pubmedqa_classifier.py`, with
+  MLM-pretrain and class-weight options), and per-stage latency
+  (`scripts/benchmark_latency.py`). Real numbers now populate BENCHMARKS/README.
+- **GPU / accelerator support + scale-run wiring.** `meridian.device.resolve_device`
+  (CUDA/MPS/CPU) threaded through the trainers and the encoder; `meridian.data.scale`
+  loaders (MS MARCO / PubMedQA PQA-A / SNLI-MultiNLI-SciNLI); `scripts/train_reranker.py`,
+  `scripts/train_verifier.py` (with `--eval-nli` self-scoring), `--pqa`/`--msmarco-triples`
+  on the retriever driver, `scripts/download_scale_data.py`, and the `docs/scale-runs.md`
+  runbook. Verified training on Apple MPS.
 - **Phase 12 — v1.0 docs & demo (release gated on the real training campaign).**
   - README: architecture diagram (online path), serving quickstart, a guardrails
     section, and an honest status note; MODEL_CARD component statuses updated to
@@ -112,6 +124,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `scripts/train_tokenizer.py` (sweep + versioned artifact).
   - ADR-0002 (chunking), ADR-0003 (tokenizer corpus mix), Phase 1 design doc,
     `benchmarks/corpus.md` report, and a committed offline sample fixture.
+
+### Changed
+
+- **Corrected the retrieval headline (claims hygiene).** A clean, seed-averaged ablation
+  showed MLM Stage-0 pretraining is *within run-to-run noise* on this task (dense R@5
+  0.371 ± 0.022 vs random-init 0.382 ± 0.023); the robust ~38× lever is the switch to
+  supervised question→abstract pairs, not pretraining. An earlier draft over-credited the
+  MLM "curriculum"; BENCHMARKS/README/MODEL_CARD rewritten to match the measurement.
+
+### Fixed
+
+- **Reranker catastrophe → graceful degradation.** A from-scratch cross-encoder overfits
+  limited data and, applied purely, dragged BM25's R@5 below random (0.029). `RerankingRetriever`
+  now supports reciprocal-rank fusion with the base (`base_weight`) and breaks ties by base
+  rank, recovering R@5 to 0.983; exposed via the retriever factory.
+- **`.gitignore`** `data/` matched at any depth and hid the new `src/meridian/data` package;
+  anchored to `/data/` so datasets stay ignored but the package is tracked.
 
 ## [0.0.1] - 2026-07-13
 

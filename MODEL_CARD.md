@@ -1,9 +1,12 @@
-# Model Card — Meridian (placeholder)
+# Model Card — Meridian
 
-> **Placeholder.** Meridian is at Phase 0 (scaffolding); no models are trained yet.
-> This card is filled in as components ship, and every quantitative field is
-> populated **only** from the committed evaluation harness — never estimated.
-> See [benchmarks/BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+> **Status.** All pipeline components are implemented and run end-to-end. The
+> retriever, reranker, and a PubMedQA answer classifier are **trained on real data and
+> measured** (PubMedQA PQA-L; see [benchmarks/BENCHMARKS.md](benchmarks/BENCHMARKS.md)).
+> Larger-scale training on the heavy corpora (MS MARCO, SNLI/MultiNLI/SciNLI, PubMedQA
+> PQA-A) is wired but deferred to a GPU (see [docs/scale-runs.md](docs/scale-runs.md)).
+> Every quantitative field is populated **only** from the committed evaluation harness —
+> never estimated.
 
 ## Intended use
 
@@ -22,26 +25,29 @@
 
 ## Components
 
-Every component's training/inference pipeline is **implemented and tested offline**;
-each is trained on real data by a committed, seeded script (not yet run at scale).
+Every component's training/inference pipeline is **implemented and tested offline** and
+trainable by a committed, seeded script. "Measured" = a real number lives in BENCHMARKS;
+"implemented" = runs end-to-end but a real number awaits its training run.
 
 | Component | Framework | Size | Status |
 |---|---|---|---|
-| BPE tokenizer | Polaris | — | implemented (mixed-corpus BPE, versioned artifact) |
-| Bi-encoder retriever | Polaris | ~10–30M | implemented (MLM → contrastive; brute/IVF/HNSW) |
-| Cross-encoder reranker | Polaris | ~10–30M | implemented (pointwise BCE pair scorer) |
+| BPE tokenizer | Polaris | — | trained (mixed-corpus BPE, versioned artifact) |
+| Bi-encoder retriever | Polaris | ~10–30M | **measured** on PubMedQA (R@5 0.38 ± 0.02; MLM Stage-0 within noise) |
+| Cross-encoder reranker | Polaris | ~10–30M | **measured** on PubMedQA (pure rerank hurts; base-fused degrades gracefully) |
 | Answerability gate | Polaris | shares pair head | implemented (2-class) |
-| NLI faithfulness verifier | Polaris | ~10–30M | implemented (3-class entailment) |
+| NLI faithfulness verifier | Polaris | ~10–30M | implemented (3-class); PubMedQA answer classifier **measured** (0.531) |
 | Grounded generator | Zenith | ~30–125M | implemented (LoRA SFT, citation-constrained decoding, abstain) |
 
-"Implemented" = the model, training, and inference run end-to-end offline on a tiny
-sample; documented **quality numbers require the real training runs** (deferred).
+Numbers and their reproduction scripts live in
+[BENCHMARKS.md](benchmarks/BENCHMARKS.md); they are laptop-scale and honest about it —
+the heavier training sets lift them but are a separate GPU run.
 
 ## Evaluation
 
-Populated from the harness (retrieval, faithfulness, calibration, latency) once the real
-corpus is ingested and the components are trained. Every cell is reproducible from a
-committed script; no number is estimated. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+Measured on real PubMedQA PQA-L (retrieval ablation, PubMedQA answer classifier, serving
+latency), with faithfulness / calibration / ANN and the heavy-corpus rows still `TBD`
+until those runs. Every cell is reproducible from a committed, seeded script; no number is
+estimated. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
 ## Limitations & risks
 
