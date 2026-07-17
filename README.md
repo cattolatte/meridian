@@ -21,10 +21,12 @@
 Built in strictly ordered vertical slices; `meridian ask` answers end-to-end from
 `v0.1.0`. Every ML component (tokenizer, dense retriever, IVF/HNSW index, reranker,
 grounded generator, NLI verifier, answerability gate) is **implemented and trained by a
-committed, seeded pipeline**, verified offline on a tiny sample. The **real quality
-numbers require the PubMed/PubMedQA/MS MARCO downloads and MPS/CUDA training runs** — a
-deliberate, networked step the user runs; until then benchmark cells read `TBD` (numbers
-are never written from memory). See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+committed, seeded pipeline**. Retrieval is **measured on a real 1000-abstract PubMedQA
+corpus** — BM25 reaches **Recall@5 = 0.987 / nDCG@10 = 0.973**, and an honest,
+deliberately-weak dense baseline trails it (the ADR-0004 story). Headline generation,
+faithfulness, and calibration numbers need the heavier training sets (MS MARCO / SNLI /
+PQA-A) or the multi-GB domain-filtered PubMed baseline and stay `TBD` until those runs —
+numbers are never written from memory. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
 ## Architecture (online path)
 
