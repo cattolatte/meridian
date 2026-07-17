@@ -1556,7 +1556,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
     { name = "torch", specifier = ">=2.2" },
-    { name = "zenith-nlp", specifier = "==1.0.0" },
+    { name = "zenith-nlp", specifier = "==1.1.0" },
 ]
 provides-extras = ["tracking", "benchmark", "dev"]
 
@@ -3278,7 +3278,7 @@ wheels = [
 
 [[package]]
 name = "zenith-nlp"
-version = "1.0.0"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hydra-core" },
@@ -3286,9 +3286,9 @@ dependencies = [
     { name = "omegaconf" },
     { name = "torch" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8f/03/241b9a0c69a26ee2406eb1aa36ccb9bd15e4e65642e99a1062a432d7161c/zenith_nlp-1.0.0.tar.gz", hash = "sha256:c6ce1727a7422cab6f93825dac52c2f009026ea2511f38d29e2650cdd3978bfa", size = 47242, upload-time = "2026-07-07T12:34:16.457Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/30/cb96b4ad57a0c077083574ecbd3e4aa5357df62afffbd27cced0ef242c4a/zenith_nlp-1.1.0.tar.gz", hash = "sha256:5dc59a7a2d829c0849cda3c450512249b6405ca59ec82d24904bf6d200a55bca", size = 50880, upload-time = "2026-07-17T00:40:36.38Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/82/842e363a28926a452cbbb2fd3d1a863ca38743def8575193225daa11ac61/zenith_nlp-1.0.0-py3-none-any.whl", hash = "sha256:26e8b12da566486d6122872875ebfeea6f8dad68705c3626962e904bff3eda64", size = 54928, upload-time = "2026-07-07T12:34:15.052Z" },
+    { url = "https://files.pythonhosted.org/packages/76/0e/fcacfdc40d945aad286922956d71156ba92012ed54592d8cf7700eb219c9/zenith_nlp-1.1.0-py3-none-any.whl", hash = "sha256:27b5d158c5577adc0a9c7d22766ead26fcd3f07b08a2703208a2d6e200e388cc", size = 59537, upload-time = "2026-07-17T00:40:34.906Z" },
 ]
 
 [[package]]

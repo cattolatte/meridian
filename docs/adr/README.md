@@ -13,6 +13,7 @@ ADR that supersedes the old one.
 | [0003](0003-tokenizer-corpus-mix.md) | Tokenizer training corpus mix and vocabulary size | Accepted |
 | [0004](0004-training-curriculum.md) | Dense retriever training curriculum (MLM → contrastive → domain) | Accepted |
 | [0005](0005-default-index.md) | Default ANN index backend (HNSW; reaffirm from real benchmark) | Accepted |
+| [0006](0006-answer-format.md) | Answer format: `[n]` citations, constrained decoding, abstain | Accepted |
 
 ## Template
 

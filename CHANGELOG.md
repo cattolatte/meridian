@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 7 — grounded generator (Zenith).**
+  - Bumps the pin to `zenith-nlp==1.1.0` (constrained-decoding hook, `AllowedTokens`,
+    `Generator.abstained`, `instruct.grounded`).
+  - `meridian.generation`: `GeneratorConfig`/artifact (Zenith `DecoderLM`, LoRA-aware
+    save/load), grounded-SFT example builders, `train_generator` (LoRA SFT via
+    `CausalLMTrainer`), and `answer_grounded` — retrieve → citation-constrained decode
+    (a `[n]` can only reference a retrieved passage) → parse citations to PMIDs, or
+    abstain.
+  - CLI `meridian ask --answerer generated --generator DIR`; ADR-0006 (answer format).
+  - Extractive answering remains the default fallback.
 - **Phase 6 — cross-encoder reranker.**
   - Bumps the pin to `polaris-nlp==1.4.0` (SentencePairClassifier, collate_pairs,
     special-token reservation, native BPETokenizer save/load).

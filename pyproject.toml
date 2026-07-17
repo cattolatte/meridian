@@ -38,7 +38,7 @@ classifiers = [
 # Everything else in this repo is built on PyTorch/NumPy primitives.
 dependencies = [
     "polaris-nlp==1.4.0",
-    "zenith-nlp==1.0.0",
+    "zenith-nlp==1.1.0",
     "numpy>=1.26",
     "torch>=2.2",
 ]

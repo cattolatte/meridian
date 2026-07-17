@@ -69,6 +69,24 @@ def _run_ask(args: argparse.Namespace) -> int:
         except ValueError as error:
             print(str(error))
             return 1
+        if args.answerer == "generated":
+            if args.generator is None:
+                print("generated answers require --generator")
+                return 1
+            from zenith.tokenizers.byte_tokenizer import ByteTokenizer
+
+            from meridian.generation.answerer import answer_grounded, render_grounded_answer
+            from meridian.generation.artifact import load_generator
+
+            grounded = answer_grounded(
+                retriever,
+                load_generator(args.generator),
+                ByteTokenizer(),
+                args.question,
+                k=args.passages,
+            )
+            print(render_grounded_answer(grounded))
+            return 0
         answer = answer_extractive(
             retriever, args.question, k_passages=args.passages, max_sentences=args.sentences
         )
@@ -107,6 +125,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--rerank", action="store_true", help="rerank candidates with the cross-encoder"
     )
     ask.add_argument("--reranker", type=Path, help="reranker artifact dir (with --rerank)")
+    ask.add_argument(
+        "--answerer",
+        choices=("extractive", "generated"),
+        default="extractive",
+        help="answer with verbatim extractive passages (default) or the grounded generator",
+    )
+    ask.add_argument("--generator", type=Path, help="generator artifact dir (--answerer generated)")
     ask.add_argument("--passages", type=int, default=5, help="passages to retrieve")
     ask.add_argument("--sentences", type=int, default=3, help="cited sentences to return")
     ask.set_defaults(func=_run_ask)
