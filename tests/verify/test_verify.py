@@ -75,6 +75,31 @@ def test_training_loss_decreases() -> None:
     assert losses[-1] < losses[0]
 
 
+def test_training_accepts_class_weights() -> None:
+    tok = _tok()
+    pad, cls, sep = _ids(tok)
+    torch.manual_seed(0)
+    model = build_verifier(_config(tok))
+    examples = [
+        ("metformin lowers mortality", "metformin reduces mortality", int(NLILabel.ENTAILMENT)),
+        ("metformin lowers mortality", "metformin raises mortality", int(NLILabel.CONTRADICTION)),
+        ("beta blockers help", "melanoma immunotherapy works", int(NLILabel.NEUTRAL)),
+    ] * 4
+    losses = train_verifier(
+        model,
+        make_nli_samples(examples, tok),
+        pad_id=pad,
+        cls_id=cls,
+        sep_id=sep,
+        epochs=10,
+        batch_size=4,
+        learning_rate=5e-3,
+        class_weights=[1.0, 1.0, 3.0],  # up-weight the minority (maybe/neutral) class
+    )
+    assert all(math.isfinite(x) for x in losses)
+    assert losses[-1] < losses[0]
+
+
 def test_artifact_roundtrip(tmp_path: Path) -> None:
     tok = _tok()
     config = _config(tok)

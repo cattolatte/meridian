@@ -108,6 +108,18 @@ def test_reorders_base_ranking_toward_relevant() -> None:
         assert top.pmid == "1"
 
 
+def test_base_weight_fusion_preserves_strong_base() -> None:
+    """A reranker fused with a heavy base weight cannot fully override the base order."""
+    tok = _tok()
+    model = _trained_reranker(tok)
+    with _store() as store:
+        # Base ranks the relevant doc "1" first; a *pure* rerank could demote it, but a
+        # base-dominant fusion must keep "1" on top (graceful degradation).
+        base = _FixedRetriever(["1", "3", "2"], store)
+        fused = RerankingRetriever(base, model, tok, store, candidates=10, base_weight=100.0)
+        assert fused.retrieve(_QUERY, k=1)[0].pmid == "1"
+
+
 def test_requires_cls_sep_tokens() -> None:
     maskless = train_bpe(
         [["heart", "failure"]] * 3, vocab_size=40, unk_token="<unk>", pad_token="<pad>"

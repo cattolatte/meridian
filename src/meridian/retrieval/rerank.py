@@ -31,6 +31,8 @@ class RerankingRetriever:
         *,
         candidates: int = 100,
         max_length: int = 256,
+        base_weight: float = 0.0,
+        rrf_k: int = 60,
     ) -> None:
         vocab = tokenizer.vocabulary
         if vocab.cls_id is None or vocab.sep_id is None:
@@ -41,12 +43,24 @@ class RerankingRetriever:
         self._store = store
         self._candidates = candidates
         self._max_length = max_length
+        self._base_weight = base_weight
+        self._rrf_k = rrf_k
         self._pad_id = vocab.pad_id or 0
         self._cls_id = vocab.cls_id
         self._sep_id = vocab.sep_id
 
     def retrieve(self, query: str, *, k: int = 10) -> list[RetrievalHit]:
-        """Retrieve top-``candidates`` from the base, rerank, and return top-``k``."""
+        """Retrieve top-``candidates`` from the base, rerank, and return top-``k``.
+
+        With ``base_weight == 0`` (default) this is a pure cross-encoder rerank. With
+        ``base_weight > 0`` the reranker's ranking is *fused* with the base ranking by
+        reciprocal-rank fusion — ``base_weight/(rrf_k + base_rank) + 1/(rrf_k +
+        rerank_rank)`` — so a reranker that is *weaker* than its base (e.g. a
+        from-scratch model that overfits limited data) can no longer scramble a strong
+        base ranking; it degrades gracefully toward the base instead of below random.
+        Ties break by base rank, then PMID, so the fallback is the base order, never an
+        arbitrary PMID sort.
+        """
         hits = [hit for hit in self._base.retrieve(query, k=self._candidates) if hit.document]
         if not hits:
             return []
@@ -66,8 +80,21 @@ class RerankingRetriever:
         with torch.no_grad():
             scores = self._model(batch).squeeze(-1).tolist()
 
-        ranked = sorted(zip(hits, scores, strict=True), key=lambda item: (-item[1], item[0].pmid))
+        base_rank = {hit.pmid: rank for rank, hit in enumerate(hits)}
+        score_by_pmid = {hit.pmid: score for hit, score in zip(hits, scores, strict=True)}
+        rerank_order = sorted(
+            hits, key=lambda hit: (-score_by_pmid[hit.pmid], base_rank[hit.pmid], hit.pmid)
+        )
+        rerank_rank = {hit.pmid: rank for rank, hit in enumerate(rerank_order)}
+
+        def fused_score(hit: RetrievalHit) -> float:
+            rr = 1.0 / (self._rrf_k + rerank_rank[hit.pmid])
+            if self._base_weight == 0.0:
+                return rr
+            return self._base_weight / (self._rrf_k + base_rank[hit.pmid]) + rr
+
+        ranked = sorted(hits, key=lambda hit: (-fused_score(hit), base_rank[hit.pmid], hit.pmid))
         return [
-            RetrievalHit(pmid=hit.pmid, score=float(score), document=hit.document)
-            for hit, score in ranked[:k]
+            RetrievalHit(pmid=hit.pmid, score=float(score_by_pmid[hit.pmid]), document=hit.document)
+            for hit in ranked[:k]
         ]

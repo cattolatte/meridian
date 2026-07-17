@@ -22,39 +22,56 @@ scripts/<benchmark>.py   →   MLflow run ID   →   row below
 
 ## Retrieval
 
-### PubMedQA PQA-L retrieval benchmark (real, full ablation)
+### PubMedQA PQA-L retrieval benchmark (real, seed-averaged ablation)
 
 A self-contained retrieval task from PubMedQA PQA-L: **1000 real abstracts**, each question
 retrieving its own source abstract. **Clean 3-way split — no leakage**: train 590 (trains
-the dense retriever + reranker), dev 239 (reported below), test held out. The dense
-retriever and reranker are trained by the **actual ADR-0004 curriculum** (MLM Stage-0
-pretraining → supervised contrastive → hard-negative reranking). One command reproduces the
-whole table: `uv run python scripts/campaign_pubmedqa.py --pqal data/pubmedqa/ori_pqal.json --out data/pubmedqa/campaign.json`.
+the dense retriever + reranker), dev 239 (reported below), test held out. Main table
+reproduced by `scripts/ablate_stage0.py`; the seed-variance study by
+`scripts/variance_dense.py` (both take `--pqal data/pubmedqa/ori_pqal.json`).
+
+**Main comparison** (dev n=239, seed 0):
 
 | Config | R@5 | R@20 | R@100 | MRR@10 | nDCG@10 |
 |---|---|---|---|---|---|
 | **BM25** | **0.987** | 0.987 | 0.996 | **0.969** | **0.974** |
-| Dense (MLM-pretrained + supervised contrastive) | 0.460 | 0.636 | 0.787 | 0.391 | 0.427 |
-| Hybrid RRF (BM25 + dense) | 0.774 | 0.987 | 0.996 | 0.689 | 0.725 |
-| BM25 + cross-encoder rerank | 0.025 | 0.134 | 0.996 | 0.014 | 0.023 |
-| Hybrid + rerank | 0.021 | 0.121 | 0.996 | 0.012 | 0.019 |
+| Dense (from-scratch, supervised contrastive) | 0.360 | 0.506 | 0.757 | 0.276 | 0.314 |
+| BM25 + cross-encoder rerank (pure) | 0.029 | 0.117 | 0.996 | 0.017 | 0.030 |
+| BM25 + rerank (base-fused, graceful) | 0.983 | 0.987 | 0.996 | 0.651 | 0.736 |
+
+Dense R@5 varies 0.36–0.42 across seeds; the seed-0 run is shown above and the
+distribution below. (Hybrid RRF sits between BM25 and dense — R@5 0.774 in the earlier
+`campaign_pubmedqa.py` run; it cannot beat a near-perfect BM25 here.)
+
+**Stage-0 ablation** — does MLM pretraining help retrieval? (4 seeds, `variance_dense.py`):
+
+| Dense trunk init | R@5 (mean ± std) | R@20 (mean ± std) |
+|---|---|---|
+| random-init | 0.382 ± 0.023 | 0.542 ± 0.025 |
+| MLM Stage-0 (2 epochs) | 0.371 ± 0.022 | 0.548 ± 0.025 |
 
 **Findings — measured, not spun (RAG.md §9):**
 
-1. **The training curriculum works (≈46× dense lift).** A from-scratch bi-encoder,
-   MLM-pretrained on the corpus then contrastively fine-tuned on 590 real
-   question→abstract pairs, reaches **Recall@5 0.46 / Recall@100 0.79** — versus ~0.01 for a
-   naive random-init, self-supervised baseline (`scripts/train_pubmedqa_dense.py`). That is
-   the ADR-0004 story (Stage-0 pretraining is what makes a from-scratch bi-encoder viable),
-   measured end-to-end.
-2. **BM25 wins on this lexically-easy task.** Questions reuse their abstract's vocabulary,
-   so lexical retrieval is near-perfect (0.987). 590 pairs and a small from-scratch dense
-   model don't close the gap — and shouldn't be expected to at this scale.
-3. **Reranking and hybrid don't help here — reported anyway.** BM25's top-5 is already
-   0.987, so a small from-scratch reranker only degrades it, and RRF with the weaker dense
-   ranking drags Recall@5 down (0.987 → 0.774). At larger corpus scale, with vocabulary
-   mismatch, and with the full training sets (MS MARCO + hard negatives), these stages earn
-   their keep; on *this* benchmark they don't, and hiding that would betray the whole point.
+1. **BM25 wins on this lexically-easy task (0.987).** Questions reuse their abstract's
+   vocabulary, so lexical retrieval is near-perfect. A small from-scratch dense model on 590
+   pairs does not close that gap — and shouldn't be expected to at this scale.
+2. **Supervised pairs are the robust lever; MLM Stage-0 is not — and we publish the ablation
+   that overturns our own hypothesis.** Switching from self-supervised (abstract-half) pairs
+   to 590 supervised question→abstract pairs lifts the from-scratch bi-encoder from R@5 ~0.01
+   (`train_pubmedqa_dense.py`) to **0.38 ± 0.02** — a ~38× gain that is real and robust.
+   Adding MLM Stage-0 pretraining on top changes **nothing measurable**: 0.371 ± 0.022 vs
+   0.382 ± 0.023 over four seeds, a difference well inside one standard deviation (and
+   directionally slightly *negative*). An earlier draft credited the gain to an MLM
+   "curriculum"; a clean, seed-averaged comparison shows the *supervised data*, not Stage-0
+   pretraining, does the work at this scale. Reporting this correction is the point.
+3. **Pure cross-encoder reranking overfits and destroys a strong base — the fusion fix makes
+   it safe.** A from-scratch reranker trained on 590 mined pairs separates positives from
+   negatives on *train* but learns nothing transferable: on *dev* the gold passage falls from
+   BM25 rank 1 to a median of ~54, so applied purely it drags R@5 to **0.029** (below
+   random). The reranker now fuses with the base ranking by reciprocal-rank fusion
+   (`base_weight`), which recovers R@5 to **0.983** — graceful degradation instead of
+   catastrophe. Reranking stays off by default; a cross-encoder needs MS MARCO-scale
+   relevance data to actually beat BM25 here.
 
 ### Domain-filtered PubMed corpus (~200K, ADR-0001) — pending baseline download
 
@@ -112,29 +129,38 @@ off-domain abstain rate come from the trained gates on the frozen dev split.
 
 PubMedQA PQA-L labels (n=1000): yes 552 / no 338 / maybe 110 → **majority-class baseline
 0.552**. A from-scratch 3-class classifier (Polaris pair head over question+context,
-96-dim, trained on 808 examples, evaluated on 192) reaches **0.531** when it runs the same
-ADR-0004 Stage-0 MLM pretraining as the retriever — reproduce with
-`scripts/train_pubmedqa_classifier.py`.
+96-dim, trained on 808 examples, evaluated on 192) reaches **0.531** — reproduce with
+`scripts/train_pubmedqa_classifier.py`. Neither Stage-0 pretraining nor class weighting
+lets it beat the majority baseline (below).
 
 | Metric | Value | Run |
 |---|---|---|
 | PubMedQA majority-class baseline (eval split) | 0.547 | build_pubmedqa.py |
 | PubMedQA accuracy (from-scratch 3-class, MLM-pretrained) | **0.531** | train_pubmedqa_classifier.py |
-| — ablation: same model, no Stage-0 pretraining | 0.495 | `... --no-pretrain` |
+| — variant: no Stage-0 pretraining | 0.495 | `... --no-pretrain` |
+| — variant: inverse-frequency class weights | 0.411 | `... --class-weights` |
 | PubMedQA accuracy (full pipeline, trained at scale) | TBD | — |
 | Answer coverage @ operating point | TBD | — |
 
-**Honest finding (pretraining helps, still short of baseline).** Stage-0 MLM pretraining
-lifts the from-scratch classifier from **0.495 → 0.531** (+3.6 pts) — the *same* curriculum
-that gives the retriever its ~46× gain also helps the classifier, a consistent result. But
-it still does **not** beat the 0.547 majority baseline: 800 examples and a tiny model are
-far too little for a reasoning task where published results (~68–78%) use large *pretrained*
-models. This is the project's honest scope (RAG.md §2): a laptop-scale, from-scratch system
-is **not accuracy-competitive with large models**, and does not pretend to be. Its value is
-the *engineering and safety design* — grounded, citation-constrained generation; NLI
+**Honest finding (below baseline; two levers tried, neither helps).** The from-scratch
+classifier reaches 0.531 and does **not** beat the 0.547 majority baseline. Two things were
+tried and reported, not cherry-picked:
+
+- **Stage-0 MLM pretraining**: 0.495 → 0.531 in a single run. Read this cautiously — the
+  seed-averaged retrieval ablation above shows MLM's effect is *within noise*, so a
+  single-run +3.6 pts on the classifier is not strong evidence of a real gain.
+- **Class weighting** (up-weight the 11% *maybe* class 3.2×): 0.531 → **0.411**. It *hurts*
+  — a model too weak to separate the classes trades overall accuracy for minority recall.
+
+We deliberately do **not** keep tuning weights toward 0.547: the eval split is frozen and
+fitting it would violate claims hygiene. 800 examples and a tiny model are far too little
+for a reasoning task where published results (~68–78%) use large *pretrained* models. This
+is the project's honest scope (RAG.md §2): a laptop-scale, from-scratch system is **not
+accuracy-competitive with large models**, and does not pretend to be. Its value is the
+*engineering and safety design* — grounded, citation-constrained generation; NLI
 verification; calibrated abstention — not a headline accuracy number. The path to a real
-number is this curriculum plus the full training sets, which the pipeline implements but has
-not run at scale.
+number is the full training sets (MS MARCO / SNLI / PQA-A), which the pipeline implements
+but has not run at scale.
 
 ## Systems / latency (Phase 10)
 

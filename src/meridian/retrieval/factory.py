@@ -68,8 +68,14 @@ def build_retriever(
     ann: str = "none",
     rerank: bool = False,
     reranker_dir: str | Path | None = None,
+    rerank_base_weight: float = 0.0,
 ) -> Retriever:
     """Build the ``bm25``/``dense``/``hybrid`` retriever, optionally reranked.
+
+    ``rerank_base_weight`` fuses the reranker with the base ranking (reciprocal-rank
+    fusion): ``0.0`` is a pure cross-encoder rerank, while a positive value anchors the
+    result to the base so a reranker weaker than its base degrades gracefully instead of
+    scrambling a strong ranking (see :class:`RerankingRetriever`).
 
     Raises :class:`ValueError` for an unknown ``kind`` or missing artifacts.
     """
@@ -86,7 +92,11 @@ def build_retriever(
     if reranker_dir is None or tokenizer_path is None:
         raise ValueError("reranking requires --reranker and --tokenizer")
     return RerankingRetriever(
-        base, load_reranker(reranker_dir), load_tokenizer(tokenizer_path), store
+        base,
+        load_reranker(reranker_dir),
+        load_tokenizer(tokenizer_path),
+        store,
+        base_weight=rerank_base_weight,
     )
 
 

@@ -21,12 +21,15 @@
 Built in strictly ordered vertical slices; `meridian ask` answers end-to-end from
 `v0.1.0`. Every ML component is **trained by a committed, seeded pipeline** and measured on
 a real 1000-abstract PubMedQA corpus (clean train/dev/test, no leakage). Headline result:
-running the **actual ADR-0004 curriculum** (MLM pretraining → supervised contrastive) lifts
-the from-scratch dense retriever from ~0.01 to **Recall@5 = 0.46 / Recall@100 = 0.79** — a
-~46× gain proving the curriculum works. **BM25 still wins on this lexically-easy task
-(R@5 = 0.987)**, and hybrid/rerank don't help — all reported honestly (RAG.md §9), never
-hidden. Numbers that need the heavier training sets (MS MARCO / SNLI / PQA-A) or the
-multi-GB domain-filtered PubMed baseline stay `TBD`. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+supervised contrastive training lifts the from-scratch dense retriever from ~0.01 to
+**Recall@5 = 0.38 ± 0.02** (4 seeds) — a ~38× gain from the supervised data. A clean,
+seed-averaged ablation shows **MLM Stage-0 pretraining adds nothing measurable** here
+(0.371 ± 0.022 vs 0.382 ± 0.023) — we publish the ablation that overturns our own
+hypothesis. **BM25 still wins this lexically-easy task (R@5 = 0.987)**; the from-scratch
+reranker overfits limited data and is fused with the base to degrade gracefully rather than
+scramble it (pure 0.029 → fused 0.983). All reported honestly (RAG.md §9), never hidden.
+Numbers that need the heavier training sets (MS MARCO / SNLI / PQA-A) or the multi-GB
+domain-filtered PubMed baseline stay `TBD`. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
 ## Architecture (online path)
 

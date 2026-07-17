@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from collections import Counter
 from pathlib import Path
 
 import torch
@@ -43,6 +44,11 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--mlm-epochs", type=int, default=3)
     parser.add_argument("--no-pretrain", action="store_true", help="skip Stage-0 MLM (ablation)")
+    parser.add_argument(
+        "--class-weights",
+        action="store_true",
+        help="inverse-frequency class weights (counter yes/no/maybe imbalance)",
+    )
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
@@ -90,6 +96,12 @@ def main() -> None:
         )
         initialize_from_mlm(mlm, model)
         print(f"MLM-pretrained trunk ({args.mlm_epochs} epochs) -> classifier", flush=True)
+    weights: list[float] | None = None
+    if args.class_weights:
+        counts = Counter(label for _, _, label in train_examples)
+        total = len(train_examples)
+        weights = [total / (len(_LABELS) * counts.get(i, 1)) for i in range(len(_LABELS))]
+        print(f"class weights {[round(w, 3) for w in weights]}", flush=True)
     losses = train_verifier(
         model,
         make_nli_samples(train_examples, tokenizer),
@@ -99,6 +111,7 @@ def main() -> None:
         epochs=args.epochs,
         batch_size=16,
         max_length=256,
+        class_weights=weights,
         seed=args.seed,
     )
     print(f"training done; final loss {losses[-1]:.4f}")
@@ -121,8 +134,6 @@ def main() -> None:
             predictions[pubid] = _LABELS[int(model(batch).argmax(dim=-1)[0])]
 
     accuracy = pubmedqa_accuracy(predictions, gold)
-    from collections import Counter
-
     majority = max(Counter(gold.values()).values()) / len(gold)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(

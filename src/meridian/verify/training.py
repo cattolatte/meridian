@@ -28,9 +28,15 @@ def train_verifier(
     batch_size: int = 16,
     learning_rate: float = 1e-3,
     max_length: int = 256,
+    class_weights: Sequence[float] | None = None,
     seed: int = 0,
 ) -> list[float]:
     """Train ``model`` on NLI ``samples``; return per-epoch mean cross-entropy losses.
+
+    ``class_weights`` (one per class) up-weights the loss on under-represented classes,
+    so a minority label — e.g. PubMedQA ``maybe`` (11% of PQA-L) — is not drowned out by
+    the majority. Pass inverse-frequency weights to counter class imbalance; ``None``
+    keeps the unweighted cross-entropy.
 
     Raises :class:`ValueError` if ``samples`` is empty.
     """
@@ -49,7 +55,8 @@ def train_verifier(
         for start in range(0, len(samples), batch_size)
     ]
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    loss_fn = nn.CrossEntropyLoss()
+    weight = torch.tensor(class_weights, dtype=torch.float) if class_weights else None
+    loss_fn = nn.CrossEntropyLoss(weight=weight)
 
     model.train()
     losses: list[float] = []
