@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 9 — abstention & calibration.**
+  - `meridian.abstain`: Gate 1 `RetrievalGate` (top score + top-1/top-k margin);
+    Gate 2 answerability classifier (Polaris `SentencePairClassifier`,
+    `num_classes=2`) config/artifact/data/training + `answerable_probability`;
+    `risk_coverage_curve`/`operating_point` for selective answering; ADR-0007.
 - **Phase 8 — faithfulness verifier (NLI) + citation checking.**
   - `meridian.verify`: NLI verifier (Polaris `SentencePairClassifier`,
     `num_classes=3`) config/artifact, `make_nli_samples`, 3-class `train_verifier`;
