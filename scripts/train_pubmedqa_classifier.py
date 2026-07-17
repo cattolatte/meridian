@@ -17,6 +17,8 @@ from pathlib import Path
 
 import torch
 
+from meridian.encoder.artifact import EmbedderConfig
+from meridian.encoder.pretrain import build_mlm, initialize_from_mlm, mlm_pretrain
 from meridian.eval.pubmedqa import pubmedqa_accuracy
 from meridian.tokenization.training import train_tokenizer
 from meridian.verify.artifact import NLIConfig, build_verifier
@@ -39,6 +41,8 @@ def main() -> None:
     parser.add_argument("--vocab-size", type=int, default=3000)
     parser.add_argument("--embed-dim", type=int, default=64)
     parser.add_argument("--epochs", type=int, default=8)
+    parser.add_argument("--mlm-epochs", type=int, default=3)
+    parser.add_argument("--no-pretrain", action="store_true", help="skip Stage-0 MLM (ablation)")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
@@ -69,6 +73,23 @@ def main() -> None:
     model = build_verifier(
         NLIConfig(vocab_size=v.size, embed_dim=args.embed_dim, num_layers=2, pad_id=v.pad_id or 0)
     )
+    if not args.no_pretrain:
+        mlm = build_mlm(
+            EmbedderConfig(
+                vocab_size=v.size, embed_dim=args.embed_dim, num_layers=2, pad_id=v.pad_id or 0
+            )
+        )
+        mlm_pretrain(
+            mlm,
+            list(contexts.values()),
+            tokenizer,
+            mask_id=v.mask_id,
+            vocab_size=v.size,
+            epochs=args.mlm_epochs,
+            seed=args.seed,
+        )
+        initialize_from_mlm(mlm, model)
+        print(f"MLM-pretrained trunk ({args.mlm_epochs} epochs) -> classifier", flush=True)
     losses = train_verifier(
         model,
         make_nli_samples(train_examples, tokenizer),

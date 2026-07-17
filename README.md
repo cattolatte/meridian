@@ -19,14 +19,14 @@
 ## Status
 
 Built in strictly ordered vertical slices; `meridian ask` answers end-to-end from
-`v0.1.0`. Every ML component (tokenizer, dense retriever, IVF/HNSW index, reranker,
-grounded generator, NLI verifier, answerability gate) is **implemented and trained by a
-committed, seeded pipeline**. Retrieval is **measured on a real 1000-abstract PubMedQA
-corpus** — BM25 reaches **Recall@5 = 0.987 / nDCG@10 = 0.973**, and an honest,
-deliberately-weak dense baseline trails it (the ADR-0004 story). Headline generation,
-faithfulness, and calibration numbers need the heavier training sets (MS MARCO / SNLI /
-PQA-A) or the multi-GB domain-filtered PubMed baseline and stay `TBD` until those runs —
-numbers are never written from memory. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+`v0.1.0`. Every ML component is **trained by a committed, seeded pipeline** and measured on
+a real 1000-abstract PubMedQA corpus (clean train/dev/test, no leakage). Headline result:
+running the **actual ADR-0004 curriculum** (MLM pretraining → supervised contrastive) lifts
+the from-scratch dense retriever from ~0.01 to **Recall@5 = 0.46 / Recall@100 = 0.79** — a
+~46× gain proving the curriculum works. **BM25 still wins on this lexically-easy task
+(R@5 = 0.987)**, and hybrid/rerank don't help — all reported honestly (RAG.md §9), never
+hidden. Numbers that need the heavier training sets (MS MARCO / SNLI / PQA-A) or the
+multi-GB domain-filtered PubMed baseline stay `TBD`. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
 ## Architecture (online path)
 
