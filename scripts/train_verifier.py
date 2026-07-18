@@ -47,6 +47,12 @@ def main() -> None:
         "--eval-nli", type=Path, action="append", help="held-out NLI JSONL to score (repeatable)"
     )
     parser.add_argument("--eval-max", type=int, default=5000, help="cap eval examples per file")
+    parser.add_argument(
+        "--eval-every",
+        type=int,
+        default=0,
+        help="eval every N epochs and keep the best checkpoint (early stopping); 0 = end only",
+    )
     parser.add_argument("--random-init", action="store_true", help="skip Stage-0 MLM (ablation)")
     parser.add_argument("--embed-dim", type=int, default=256)
     parser.add_argument("--num-layers", type=int, default=4)
@@ -106,26 +112,7 @@ def main() -> None:
         initialize_from_mlm(mlm, verifier)
         print(f"stage 0: MLM-pretrained trunk on {len(sentences)} sentences")
 
-    losses = train_verifier(
-        verifier,
-        make_nli_samples(examples, tokenizer),
-        pad_id=pad_id,
-        cls_id=tokenizer.vocabulary.cls_id,
-        sep_id=tokenizer.vocabulary.sep_id,
-        epochs=args.epochs,
-        device=device,
-        seed=args.seed,
-    )
-    print(f"trained on {len(examples)} examples; final loss {losses[-1]:.4f}")
-
-    save_verifier(
-        verifier,
-        config,
-        args.out,
-        metadata={"num_examples": len(examples), "epochs": args.epochs, "final_loss": losses[-1]},
-    )
-    print(f"wrote verifier artifact -> {args.out}")
-
+    dev_sets: list[tuple[str, list[tuple[str, str, int]]]] = []
     for dev_path in args.eval_nli or []:
         dev = load_nli_jsonl(
             dev_path,
@@ -134,27 +121,88 @@ def main() -> None:
             label_field=args.label_field,
             max_examples=args.eval_max,
         )
-        if not dev:
+        if dev:
+            dev_sets.append((dev_path.name, dev))
+        else:
             print(f"eval {dev_path.name}: no labeled examples")
-            continue
+
+    def score() -> float:
+        """Accuracy on each dev set (printed); returns the first (primary) one."""
         verifier.eval()
-        correct = 0
-        for start in range(0, len(dev), 64):
-            chunk = dev[start : start + 64]
-            batch = collate_pairs(
-                make_nli_samples(chunk, tokenizer),
-                pad_id=pad_id,
-                cls_id=tokenizer.vocabulary.cls_id,
-                sep_id=tokenizer.vocabulary.sep_id,
-                max_length=256,
+        primary = 0.0
+        for i, (name, dev) in enumerate(dev_sets):
+            correct = 0
+            for start in range(0, len(dev), 64):
+                chunk = dev[start : start + 64]
+                batch = collate_pairs(
+                    make_nli_samples(chunk, tokenizer),
+                    pad_id=pad_id,
+                    cls_id=tokenizer.vocabulary.cls_id,
+                    sep_id=tokenizer.vocabulary.sep_id,
+                    max_length=256,
+                )
+                if device is not None:
+                    batch = batch.to(device)
+                with torch.no_grad():
+                    preds = verifier(batch).argmax(dim=-1).cpu()
+                gold = torch.tensor([label for _, _, label in chunk])
+                correct += int((preds == gold).sum())
+            acc = correct / len(dev)
+            print(f"eval {name}: accuracy {acc:.4f} (n={len(dev)})", flush=True)
+            if i == 0:
+                primary = acc
+        return primary
+
+    best_acc = -1.0
+    best_epoch = -1
+
+    def on_epoch(epoch: int, _model: object) -> None:
+        nonlocal best_acc, best_epoch
+        last = (epoch + 1) == args.epochs
+        if not (last or (args.eval_every and (epoch + 1) % args.eval_every == 0)):
+            return
+        print(f"[epoch {epoch + 1}/{args.epochs}]", flush=True)
+        acc = score()
+        if acc > best_acc:
+            best_acc, best_epoch = acc, epoch + 1
+            save_verifier(
+                verifier,
+                config,
+                args.out,
+                metadata={"num_examples": len(examples), "epoch": epoch + 1, "dev_accuracy": acc},
             )
-            if device is not None:
-                batch = batch.to(device)
-            with torch.no_grad():
-                preds = verifier(batch).argmax(dim=-1).cpu()
-            gold = torch.tensor([label for _, _, label in chunk])
-            correct += int((preds == gold).sum())
-        print(f"eval {dev_path.name}: accuracy {correct / len(dev):.4f} (n={len(dev)})")
+            print(f"  -> new best {acc:.4f}, saved {args.out}", flush=True)
+
+    track_best = bool(args.eval_every and dev_sets)
+    losses = train_verifier(
+        verifier,
+        make_nli_samples(examples, tokenizer),
+        pad_id=pad_id,
+        cls_id=tokenizer.vocabulary.cls_id,
+        sep_id=tokenizer.vocabulary.sep_id,
+        epochs=args.epochs,
+        device=device,
+        epoch_callback=on_epoch if track_best else None,
+        seed=args.seed,
+    )
+    print(f"trained on {len(examples)} examples; final loss {losses[-1]:.4f}")
+
+    if track_best:
+        print(f"best dev accuracy {best_acc:.4f} at epoch {best_epoch} -> {args.out}")
+    else:
+        save_verifier(
+            verifier,
+            config,
+            args.out,
+            metadata={
+                "num_examples": len(examples),
+                "epochs": args.epochs,
+                "final_loss": losses[-1],
+            },
+        )
+        print(f"wrote verifier artifact -> {args.out}")
+        if dev_sets:
+            score()
 
 
 if __name__ == "__main__":

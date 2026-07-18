@@ -100,6 +100,24 @@ def test_training_accepts_class_weights() -> None:
     assert losses[-1] < losses[0]
 
 
+def test_training_epoch_callback_runs_each_epoch() -> None:
+    tok = _tok()
+    pad, cls, sep = _ids(tok)
+    torch.manual_seed(0)
+    model = build_verifier(_config(tok))
+    seen: list[int] = []
+    train_verifier(
+        model,
+        make_nli_samples([("a b", "c d", 0), ("e f", "g h", 2)] * 2, tok),
+        pad_id=pad,
+        cls_id=cls,
+        sep_id=sep,
+        epochs=3,
+        epoch_callback=lambda epoch, _model: seen.append(epoch),
+    )
+    assert seen == [0, 1, 2]
+
+
 def test_artifact_roundtrip(tmp_path: Path) -> None:
     tok = _tok()
     config = _config(tok)
