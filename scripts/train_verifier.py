@@ -58,6 +58,12 @@ def main() -> None:
     parser.add_argument("--num-layers", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--mlm-epochs", type=int, default=1)
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=1e-3,
+        help="Adam LR; lower it (e.g. 3e-4) for deeper/wider models that train unstably",
+    )
     parser.add_argument("--device", default="auto", help="auto | cpu | cuda | mps")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
@@ -181,6 +187,7 @@ def main() -> None:
         cls_id=tokenizer.vocabulary.cls_id,
         sep_id=tokenizer.vocabulary.sep_id,
         epochs=args.epochs,
+        learning_rate=args.learning_rate,
         device=device,
         epoch_callback=on_epoch if track_best else None,
         seed=args.seed,
