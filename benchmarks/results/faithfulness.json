@@ -1,0 +1,9 @@
+{
+  "queries": 527,
+  "answered": 527,
+  "answer_coverage": 1.0,
+  "citation_precision": 0.7507906388361796,
+  "citation_recall": 0.75,
+  "hallucination_rate": 0.43690702087286526,
+  "grounded_rate": 0.0
+}

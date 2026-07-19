@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Full benchmark sweep — every section measured, no `TBD` cells.** ANN on the real index
+  (HNSW recall@10 0.996 @ 0.262 ms, with `tracemalloc` memory reporting); NLI verifier
+  quality (SNLI dev **0.783**, chance 0.333) with the tokenizer/data/learning-rate ablation;
+  faithfulness via the new `scripts/benchmark_faithfulness.py` (citation precision 0.751,
+  hallucination 0.437 — the verifier's *out-of-domain* error, since extractive answers quote
+  verbatim); real Gate-1 calibration (0.801 coverage @ 0.000 error); and per-stage latency
+  with all trained artifacts (rerank 421 ms vs BM25 1.33 ms). Measured JSON is committed in
+  `benchmarks/results/` and the charts regenerate from it via `scripts/plot_summary.py`
+  (`retrieval_ablation`, `verifier_progression`, `latency_breakdown`). Items that were not
+  run — ~200K PubMed corpus, generator pipeline, verifier–human agreement — say so instead
+  of carrying an estimate.
+- **Verifier early stopping + LR control.** `train_verifier.py --eval-every N` evaluates a
+  held-out set each N epochs and keeps the **best** checkpoint (it caught the peak epoch
+  where a long run would otherwise have shipped an overfit final epoch); `--learning-rate`
+  exposes the knob that took the 384×6 model from 0.607 to 0.783.
+- **Reranker trainable without MS MARCO.** `train_reranker.py --pqal` mines BM25 hard
+  negatives from PubMedQA, unblocking the reranker (and its latency benchmark) without the
+  gated multi-GB download.
 - **Real benchmark campaign on PubMedQA PQA-L.** A self-contained 1000-abstract retrieval
   task (clean train/dev/test, no leakage): BM25 vs from-scratch dense vs reranker, a
   seed-averaged Stage-0 ablation (`scripts/ablate_stage0.py`, `scripts/variance_dense.py`),
@@ -135,6 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`verify_grounded_answer` crashed on GPU/MPS** — it never moved its collated batch to
+  the model's device. It now follows the model's device (and returns predictions on CPU).
 - **Reranker catastrophe → graceful degradation.** A from-scratch cross-encoder overfits
   limited data and, applied purely, dragged BM25's R@5 below random (0.029). `RerankingRetriever`
   now supports reciprocal-rank fusion with the base (`base_weight`) and breaks ties by base

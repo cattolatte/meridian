@@ -16,9 +16,10 @@ Every published number comes from a committed, seeded script here (claims hygien
 - `train_tokenizer.py` — mixed-corpus BPE tokenizer (vocab sweep + fertility).
 - `train_retriever.py` — dense bi-encoder (Stage-0 MLM → contrastive); `--pqa`,
   `--msmarco-triples`, `--device`.
-- `train_reranker.py` — cross-encoder reranker on MS MARCO triples; `--device`.
+- `train_reranker.py` — cross-encoder reranker on MS MARCO triples, or `--pqal` to mine
+  BM25 hard negatives from PubMedQA (no MS MARCO download needed); `--device`.
 - `train_verifier.py` — 3-class NLI verifier on SNLI/MultiNLI/SciNLI; `--eval-nli`,
-  `--device`.
+  `--eval-every` (best-checkpoint early stopping), `--learning-rate`, `--device`.
 - `train_pubmedqa_dense.py` — leakage-free dense baseline on PubMedQA.
 - `train_pubmedqa_classifier.py` — PubMedQA yes/no/maybe classifier (MLM-pretrain /
   class-weight options).
@@ -32,7 +33,11 @@ Every published number comes from a committed, seeded script here (claims hygien
 - `campaign_pubmedqa.py` — full retrieval campaign on PubMedQA.
 - `benchmark_ann.py` — ANN recall/latency trade-off.
 - `benchmark_latency.py` — per-stage serving latency (P50/P95).
-- `benchmark_calibration.py` — risk-coverage / abstention curve.
+- `benchmark_calibration.py` — risk-coverage / abstention curve (`--db/--split` for real
+  Gate-1 records).
+- `benchmark_faithfulness.py` — citation precision/recall + hallucination rate via the
+  trained NLI verifier.
+- `plot_summary.py` — regenerate the summary charts from `benchmarks/results/`.
 
 ## Serving
 

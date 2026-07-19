@@ -19,17 +19,45 @@
 ## Status
 
 Built in strictly ordered vertical slices; `meridian ask` answers end-to-end from
-`v0.1.0`. Every ML component is **trained by a committed, seeded pipeline** and measured on
-a real 1000-abstract PubMedQA corpus (clean train/dev/test, no leakage). Headline result:
-supervised contrastive training lifts the from-scratch dense retriever from ~0.01 to
-**Recall@5 = 0.38 ± 0.02** (4 seeds) — a ~38× gain from the supervised data. A clean,
-seed-averaged ablation shows **MLM Stage-0 pretraining adds nothing measurable** here
-(0.371 ± 0.022 vs 0.382 ± 0.023) — we publish the ablation that overturns our own
-hypothesis. **BM25 still wins this lexically-easy task (R@5 = 0.987)**; the from-scratch
-reranker overfits limited data and is fused with the base to degrade gracefully rather than
-scramble it (pure 0.029 → fused 0.983). All reported honestly (RAG.md §9), never hidden.
-Numbers that need the heavier training sets (MS MARCO / SNLI / PQA-A) or the multi-GB
-domain-filtered PubMed baseline stay `TBD`. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+`v0.1.0`. Every ML component is **trained by a committed, seeded pipeline**, and every
+benchmark section carries **real measured numbers** — retrieval, ANN, NLI verifier,
+faithfulness, calibration, end-to-end accuracy, and per-stage latency.
+
+| Component | Measured result |
+|---|---|
+| BM25 retrieval (PubMedQA dev) | **R@5 0.987** |
+| Dense retriever (from scratch) | R@5 0.38 ± 0.02 (4 seeds) |
+| Cross-encoder rerank | pure 0.029 → **base-fused 0.983** (graceful degradation) |
+| ANN index | **HNSW recall@10 0.996** @ 0.262 ms, below brute-force latency |
+| NLI verifier (SNLI dev, chance 0.333) | **0.783** |
+| Gate-1 calibration | **0.801 coverage @ 0.000 error** |
+| Serving latency (P50) | search 1.33 ms · embed 2.56 ms · verify 31.6 ms · rerank 421 ms |
+
+Three honest findings we publish rather than hide (RAG.md §9): a seed-averaged ablation
+shows **MLM Stage-0 pretraining adds nothing measurable** to retrieval (0.371 ± 0.022 vs
+0.382 ± 0.023) — overturning our own hypothesis; **BM25 beats the from-scratch dense
+retriever** on this lexically-easy task; and the verifier, strong on SNLI, **does not
+transfer to biomedical text** (0.437 hallucination rate on verbatim quotes), which is a
+verifier-domain gap, not a generator failure. Three items are explicitly *not run* rather
+than estimated: the ~200K PubMed corpus, the Phase-7 generator pipeline, and
+verifier–human agreement. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md) and
+[docs/scale-runs.md](docs/scale-runs.md).
+
+### Results at a glance
+
+Every chart is regenerated from committed measurement data
+([`benchmarks/results/`](benchmarks/results)) by `scripts/plot_summary.py` — never drawn by
+hand.
+
+| From-scratch NLI verifier: what moved the number | Per-stage serving latency |
+|---|---|
+| ![verifier progression](benchmarks/figures/verifier_progression.png) | ![latency breakdown](benchmarks/figures/latency_breakdown.png) |
+
+The verifier went 0.415 → **0.783** on SNLI dev (chance 0.333) by fixing three bottlenecks
+in order — tokenizer (+6 pts), data (+22 pts), and learning rate (+17.6 pts; the red bar is
+the *same* 384×6 model trained at too high an LR). Reranking is ~320× the cost of BM25,
+which is why it stays off by default here. More: [retrieval ablation](benchmarks/figures/retrieval_ablation.png),
+[ANN trade-off](benchmarks/figures/ann_tradeoff.png), [risk-coverage](benchmarks/figures/risk_coverage.png).
 
 ## Architecture (online path)
 
@@ -91,7 +119,7 @@ src/meridian/   library code
 tests/          offline-only test suite (coverage gate ≥ 90%)
 docs/adr/       Architecture Decision Records
 docs/design/    per-phase design docs
-benchmarks/     benchmark results + reproduction scripts
+benchmarks/     BENCHMARKS.md, measured results/ (JSON), figures/
 scripts/        operational scripts (ingest, index builds, releases)
 ```
 

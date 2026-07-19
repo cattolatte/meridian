@@ -1,0 +1,14 @@
+{
+  "_source": "scripts/train_verifier.py --eval-nli snli_1.0_dev.jsonl --eval-every 1 (n=5000, chance 0.333)",
+  "runs": [
+    {"label": "96d/2L, bio tok, 10k", "accuracy": 0.4148, "lever": "baseline"},
+    {"label": "256d/4L, bio tok, 100k", "accuracy": 0.4642, "lever": "capacity+data"},
+    {"label": "256d/4L, EN tok, 100k", "accuracy": 0.5242, "lever": "tokenizer"},
+    {"label": "256d/4L, EN tok, 300k", "accuracy": 0.5828, "lever": "data"},
+    {"label": "256d/4L, EN tok, 600k", "accuracy": 0.6682, "lever": "data"},
+    {"label": "256d/4L, EN tok, 942k", "accuracy": 0.7422, "lever": "data"},
+    {"label": "384d/6L, 942k, lr 1e-3", "accuracy": 0.6072, "lever": "bad LR"},
+    {"label": "384d/6L, 942k, lr 3e-4", "accuracy": 0.7828, "lever": "learning rate"}
+  ],
+  "latency_ms_p50": {"search": 1.33, "answer": 1.22, "embed": 2.56, "verify": 31.61, "rerank": 421.13}
+}

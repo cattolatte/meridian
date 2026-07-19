@@ -42,6 +42,8 @@ reproduced by `scripts/ablate_stage0.py`; the seed-variance study by
 | BM25 + cross-encoder rerank (pure) | 0.029 | 0.117 | 0.996 | 0.017 | 0.030 |
 | BM25 + rerank (base-fused, graceful) | 0.983 | 0.987 | 0.996 | 0.651 | 0.736 |
 
+Chart: [`figures/retrieval_ablation.png`](figures/retrieval_ablation.png).
+
 Dense R@5 varies 0.36–0.42 across seeds; the seed-0 run is shown above and the
 distribution below. (Hybrid RRF sits between BM25 and dense — R@5 0.774 in the earlier
 `campaign_pubmedqa.py` run; it cannot beat a near-perfect BM25 here.)
@@ -119,6 +121,8 @@ from scratch on SNLI+MultiNLI with `scripts/train_verifier.py --eval-nli ... --e
 | 256-dim, 4 layers | English | 942k (full) | 1e-3 | 0.742 |
 | 384-dim, 6 layers | English | 942k (full) | 1e-3 | 0.607 ⚠️ |
 | **384-dim, 6 layers** | **English** | **942k (full)** | **3e-4** | **0.783** |
+
+Chart: [`figures/verifier_progression.png`](figures/verifier_progression.png).
 
 **Findings — three levers, measured in order:**
 
@@ -237,6 +241,8 @@ Verify = NLI over the cited sentences.
 | Verify (NLI over cited sentences) | 31.61 ms | 42.79 ms | 200 |
 | **Rerank (cross-encoder, 100 candidates)** | **421.13 ms** | **510.12 ms** | 200 |
 | Generate | *not run* — needs the Phase-7 Zenith generator (untrained) | — | — |
+
+Chart: [`figures/latency_breakdown.png`](figures/latency_breakdown.png).
 
 **Finding — reranking is the latency budget, exactly as designed (RAG.md §4.2).** The
 cross-encoder costs **~320× BM25** (421 ms vs 1.33 ms) because it runs full cross-attention
