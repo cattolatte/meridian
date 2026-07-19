@@ -34,8 +34,8 @@ trainable by a committed, seeded script. "Measured" = a real number lives in BEN
 | BPE tokenizer | Polaris | — | trained (mixed-corpus BPE, versioned artifact) |
 | Bi-encoder retriever | Polaris | ~10–30M | **measured** on PubMedQA (R@5 0.38 ± 0.02; MLM Stage-0 within noise) |
 | Cross-encoder reranker | Polaris | ~10–30M | **measured** on PubMedQA (pure rerank hurts; base-fused degrades gracefully) |
-| Answerability gate | Polaris | shares pair head | implemented (2-class) |
-| NLI faithfulness verifier | Polaris | ~10–30M | implemented (3-class); PubMedQA answer classifier **measured** (0.531) |
+| Answerability gate | Polaris | shares pair head | implemented (2-class); Gate-1 calibration **measured** (0.801 coverage @ 0.000 error) |
+| NLI faithfulness verifier | Polaris | ~10–30M | **measured**: SNLI dev 0.783 (3-class, chance 0.333); does *not* transfer to biomedical text (see faithfulness) |
 | Grounded generator | Zenith | ~30–125M | implemented (LoRA SFT, citation-constrained decoding, abstain) |
 
 Numbers and their reproduction scripts live in
@@ -44,10 +44,12 @@ the heavier training sets lift them but are a separate GPU run.
 
 ## Evaluation
 
-Measured on real PubMedQA PQA-L (retrieval ablation, PubMedQA answer classifier, serving
-latency), with faithfulness / calibration / ANN and the heavy-corpus rows still `TBD`
-until those runs. Every cell is reproducible from a committed, seeded script; no number is
-estimated. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
+Measured end-to-end: retrieval ablation, ANN recall/latency/memory, NLI verifier accuracy,
+faithfulness, Gate-1 calibration, the PubMedQA answer classifier, and per-stage latency.
+Three items are explicitly **not run** rather than estimated — the ~200K domain-filtered
+PubMed corpus, the generator-based pipeline (Phase-7 Zenith generator untrained), and
+verifier–human agreement (needs human annotation). Every cell is reproducible from a
+committed, seeded script. See [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
 ## Limitations & risks
 

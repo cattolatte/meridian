@@ -16,26 +16,61 @@ Example (smoke)
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import torch
 
+from meridian.corpus.records import Document
+from meridian.corpus.store import SqliteDocumentStore
 from meridian.data import load_msmarco_triples
 from meridian.device import resolve_device
 from meridian.encoder.artifact import EmbedderConfig
+from meridian.encoder.mining import mine_hard_negatives
 from meridian.encoder.pretrain import build_mlm, initialize_from_mlm, mlm_pretrain
 from meridian.reranker.artifact import RerankerConfig, build_reranker, save_reranker
 from meridian.reranker.data import make_pair_samples, pairs_from_triples
 from meridian.reranker.training import train_reranker
+from meridian.retrieval.pipeline import BM25Retriever
 from meridian.tokenization.artifact import load_tokenizer
 from meridian.tokenization.special_tokens import ensure_mask_token
+
+
+def _mine_pqal_pairs(
+    pqal: Path, *, max_examples: int | None = None, num_negatives: int = 2
+) -> tuple[list[tuple[str, str, int]], list[str]]:
+    """Mine ``(query, passage, label)`` pairs from PubMedQA using BM25 hard negatives.
+
+    Lets the reranker be trained without the (gated, multi-GB) MS MARCO download: the gold
+    abstract is the positive and BM25's top non-gold passages are the hard negatives.
+    """
+    data = json.loads(pqal.read_text())
+    contexts = {k: " ".join(v.get("CONTEXTS", [])) for k, v in data.items() if v.get("CONTEXTS")}
+    docs = [Document(pmid=k, title="", abstract=text) for k, text in contexts.items()]
+    queries = [(data[k]["QUESTION"], k) for k in contexts]
+    if max_examples is not None:
+        queries = queries[:max_examples]
+
+    with SqliteDocumentStore(":memory:") as store:
+        store.add_many(docs)
+        bm25 = BM25Retriever.from_store(store)
+        triples = mine_hard_negatives([bm25], store, queries, num_negatives=num_negatives, pool=20)
+    examples: list[tuple[str, str, int]] = []
+    for query, positive, negatives in triples:
+        examples.append((query, positive, 1))
+        examples.extend((query, negative, 0) for negative in negatives)
+    passages = list(contexts.values())
+    return examples, passages
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tokenizer", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True, help="output reranker artifact dir")
-    parser.add_argument("--msmarco-triples", type=Path, required=True)
+    parser.add_argument("--msmarco-triples", type=Path, help="MS MARCO triples TSV")
+    parser.add_argument(
+        "--pqal", type=Path, help="PubMedQA JSON; mine BM25 hard negatives instead of MS MARCO"
+    )
     parser.add_argument("--max-examples", type=int, help="cap triples (smoke runs)")
     parser.add_argument("--random-init", action="store_true", help="skip Stage-0 MLM (ablation)")
     parser.add_argument("--embed-dim", type=int, default=256)
@@ -51,11 +86,17 @@ def main() -> None:
     tokenizer, mask_id = ensure_mask_token(load_tokenizer(args.tokenizer))
     pad_id = tokenizer.vocabulary.pad_id or 0
 
-    triples = load_msmarco_triples(args.msmarco_triples, max_examples=args.max_examples)
-    if not triples:
-        parser.error(f"no triples read from {args.msmarco_triples}")
-    examples = pairs_from_triples(triples)
-    print(f"{len(triples)} triples -> {len(examples)} pointwise pairs")
+    if args.msmarco_triples:
+        triples = load_msmarco_triples(args.msmarco_triples, max_examples=args.max_examples)
+        if not triples:
+            parser.error(f"no triples read from {args.msmarco_triples}")
+        examples = pairs_from_triples(triples)
+        passages = list({p for _, p, _ in triples} | {n for _, _, n in triples})
+    elif args.pqal:
+        examples, passages = _mine_pqal_pairs(args.pqal, max_examples=args.max_examples)
+    else:
+        parser.error("pass --msmarco-triples or --pqal")
+    print(f"{len(examples)} pointwise pairs over {len(passages)} passages")
 
     rr_config = RerankerConfig(
         vocab_size=tokenizer.vocabulary.size,
@@ -66,7 +107,6 @@ def main() -> None:
     torch.manual_seed(args.seed)
     reranker = build_reranker(rr_config)
     if not args.random_init:
-        passages = list({p for _, p, _ in triples} | {n for _, _, n in triples})
         mlm = build_mlm(
             EmbedderConfig(
                 vocab_size=tokenizer.vocabulary.size,

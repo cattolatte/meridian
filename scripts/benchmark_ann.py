@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import time
+import tracemalloc
 from pathlib import Path
 
 import matplotlib
@@ -89,9 +90,16 @@ def main() -> None:
     brute_recall, brute_latency = _measure(
         lambda q: brute.search(q, k=args.k), queries, truth, args.k
     )
-    print(f"brute      recall={brute_recall:.3f} latency={brute_latency:.3f} ms")
+    brute_mb = vectors.nbytes / 1e6
+    print(
+        f"brute      recall={brute_recall:.3f} latency={brute_latency:.3f} ms mem={brute_mb:.1f} MB"
+    )
 
+    tracemalloc.start()
     ivf = IVFIndex.build(pmids, vectors, nlist=max(1, round(len(pmids) ** 0.5)), seed=args.seed)
+    ivf_mb = tracemalloc.get_traced_memory()[1] / 1e6
+    tracemalloc.stop()
+    print(f"ivf   build mem={ivf_mb:.1f} MB (on top of the {brute_mb:.1f} MB vectors)")
     ivf_points = []
     for nprobe in (1, 2, 4, 8, 16):
         recall, latency = _measure(
@@ -100,7 +108,11 @@ def main() -> None:
         ivf_points.append((latency, recall))
         print(f"ivf   np={nprobe:<3} recall={recall:.3f} latency={latency:.3f} ms")
 
+    tracemalloc.start()
     hnsw = HNSWIndex.build(pmids, vectors, seed=args.seed)
+    hnsw_mb = tracemalloc.get_traced_memory()[1] / 1e6
+    tracemalloc.stop()
+    print(f"hnsw  build mem={hnsw_mb:.1f} MB (on top of the {brute_mb:.1f} MB vectors)")
     hnsw_points = []
     for ef in (16, 32, 64, 128):
         recall, latency = _measure(

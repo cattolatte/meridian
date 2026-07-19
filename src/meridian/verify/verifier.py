@@ -95,9 +95,13 @@ def verify_grounded_answer(
             sep_id=vocab.sep_id,
             max_length=max_length,
         )
+        # Follow the model's device so a GPU/MPS-resident verifier works too.
+        parameter = next(model.parameters(), None)
+        if parameter is not None:
+            batch = batch.to(parameter.device)
         model.eval()
         with torch.no_grad():
-            predicted = model(batch).argmax(dim=-1).tolist()
+            predicted = model(batch).argmax(dim=-1).cpu().tolist()
         for i, label in zip(index_map, predicted, strict=True):
             labels[i] = NLILabel(int(label))
 

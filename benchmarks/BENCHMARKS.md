@@ -5,10 +5,13 @@
 > estimated in prose. Frozen dev/test splits are created in Phase 2 and never
 > touched afterward.
 
-**Status:** All 12 build phases are implemented. Retrieval is **measured on real
-PubMedQA data** (below); the remaining rows need the heavier training sets (MS MARCO,
-SNLI/SciNLI, PQA-A) or the multi-GB domain-filtered PubMed baseline, and stay `TBD`
-until those runs — never estimated in prose.
+**Status:** All 12 build phases are implemented, and every section below carries **real
+measured numbers** — retrieval, ANN, NLI verifier quality, faithfulness, calibration, the
+PubMedQA end-to-end classifier, and per-stage latency. Three things are explicitly **not
+run** rather than estimated, and say so where they appear: the ~200K domain-filtered PubMed
+corpus (needs the multi-GB baseline), the generator-based pipeline and its `generate`
+latency (needs the Phase-7 Zenith generator), and verifier–human agreement (needs human
+annotation). No number here is estimated in prose.
 
 ## Reproduction
 
@@ -73,57 +76,113 @@ distribution below. (Hybrid RRF sits between BM25 and dense — R@5 0.774 in the
    catastrophe. Reranking stays off by default; a cross-encoder needs MS MARCO-scale
    relevance data to actually beat BM25 here.
 
-### Domain-filtered PubMed corpus (~200K, ADR-0001) — pending baseline download
+### Domain-filtered PubMed corpus (~200K, ADR-0001) — not run
 
-Metrics on the frozen dev split of the three-domain (cardiology/endocrinology/oncology)
-corpus. All `TBD` until the multi-GB PubMed baseline is downloaded and ingested.
-
-| Config | R@5 | R@20 | R@100 | MRR@10 | nDCG@10 | Run ID |
-|---|---|---|---|---|---|---|
-| BM25 (Phase 2) | TBD | TBD | TBD | TBD | TBD | TBD |
-| Dense (Phase 3) | TBD | TBD | TBD | TBD | TBD | TBD |
-| Retriever v2 (+hard neg, Phase 5) | TBD | TBD | TBD | TBD | TBD | TBD |
-| Hybrid RRF (Phase 5) | TBD | TBD | TBD | TBD | TBD | TBD |
-| Dense + rerank (Phase 6) | TBD | TBD | TBD | TBD | TBD | TBD |
-| Hybrid + rerank (Phase 6) | TBD | TBD | TBD | TBD | TBD | TBD |
+This larger three-domain (cardiology/endocrinology/oncology) corpus requires the multi-GB
+PubMed baseline download + ingest, which has **not been run**. It is not estimated here;
+the measured retrieval numbers above come from the real 1000-abstract PubMedQA corpus.
+`scripts/ingest.py` builds this corpus when the baseline is available.
 
 ## ANN index quality (Phase 4)
 
-Recall@10 vs brute-force ground truth, as a recall / latency / memory trade-off.
-Reproduce with `scripts/benchmark_ann.py` (default: synthetic; `--embedding-index <dir>`
-for the real corpus). Default backend chosen in [ADR-0005](../docs/adr/0005-default-index.md);
-trade-off curve: [`figures/ann_tradeoff.png`](figures/ann_tradeoff.png).
+Recall@10 vs brute-force ground truth on the **real corpus** (N=1000 abstracts, dim=256,
+100 queries), as a recall / latency / memory trade-off. Reproduce with
+`uv run python scripts/benchmark_ann.py --embedding-index <index dir> --k 10`. Default
+backend chosen in [ADR-0005](../docs/adr/0005-default-index.md); trade-off curve:
+[`figures/ann_tradeoff.png`](figures/ann_tradeoff.png).
 
-| Index | Recall@10 | P50 latency | RAM | Run ID |
+| Index | Recall@10 | Mean query latency | Memory |
+|---|---|---|---|
+| Brute force (exact) | 1.000 | 0.282 ms | 1.0 MB (vectors) |
+| IVF (nprobe=16) | 0.975 | 0.215 ms | +1.1 MB |
+| **HNSW (efSearch=16)** | **0.996** | **0.262 ms** | **+0.5 MB** |
+| HNSW (efSearch=32) | 1.000 | 0.403 ms | +0.5 MB |
+
+**Finding.** HNSW dominates on this corpus: 0.996 recall *below* brute-force latency, at
+half the index overhead of IVF, and exact recall (1.000) by efSearch=32. IVF trades recall
+steeply for latency (0.413 at nprobe=1 → 0.975 at nprobe=16). At N=1000 the absolute
+latencies are all sub-millisecond, so the ANN win is structural, not yet load-bearing.
+
+## NLI verifier quality (Phase 8)
+
+3-class NLI accuracy on the held-out **SNLI dev** split (n=5000; chance = 0.333), trained
+from scratch on SNLI+MultiNLI with `scripts/train_verifier.py --eval-nli ... --eval-every 1`
+(best-epoch checkpoint). Every row is a real run on Apple MPS.
+
+| Config | Tokenizer | Data (pairs) | LR | SNLI dev accuracy |
 |---|---|---|---|---|
-| Brute force | 1.000 | TBD | TBD | TBD |
-| IVF | TBD | TBD | TBD | TBD |
-| HNSW | TBD | TBD | TBD | TBD |
+| 96-dim, 2 layers | biomedical, vocab 1.5k | 10k | 1e-3 | 0.415 |
+| 256-dim, 4 layers | biomedical, vocab 1.5k | 100k | 1e-3 | 0.464 |
+| 256-dim, 4 layers | **English, vocab 8k** | 100k | 1e-3 | 0.524 |
+| 256-dim, 4 layers | English | 300k | 1e-3 | 0.583 |
+| 256-dim, 4 layers | English | 600k | 1e-3 | 0.668 |
+| 256-dim, 4 layers | English | 942k (full) | 1e-3 | 0.742 |
+| 384-dim, 6 layers | English | 942k (full) | 1e-3 | 0.607 ⚠️ |
+| **384-dim, 6 layers** | **English** | **942k (full)** | **3e-4** | **0.783** |
 
-The three backends are implemented and benchmarked offline on synthetic vectors
-(N=2000, dim=64): HNSW reaches recall@10 ≈ 0.999 at efSearch=16 below brute-force
-latency; IVF trades recall for latency across nprobe. Real-corpus rows are filled from
-the Phase-3 embeddings (no number written from memory).
+**Findings — three levers, measured in order:**
+
+1. **Tokenizer (+6 pts).** A vocab-1.5k tokenizer trained ~70% on biomedical text shreds
+   everyday SNLI English. Rebuilding it on the NLI corpus itself (vocab 8k, general
+   fertility 1.34) lifted 0.464 → 0.524 with nothing else changed.
+2. **Data (+22 pts).** The dominant lever: 100k → 942k pairs took 0.524 → 0.742 at fixed
+   capacity, still climbing at the end.
+3. **Learning rate (+17.6 pts) — capacity is worthless without it.** The identical
+   384×6 model scored **0.607 at lr 1e-3** (dev accuracy oscillating, final train loss
+   0.893) and **0.783 at lr 3e-4** (smooth monotone climb, train loss 0.521). A deeper
+   model fitting the *training* set worse is an optimization failure, not a data or
+   capacity limit. Per-epoch eval with best-checkpointing (`--eval-every`) is what caught
+   the peak instead of shipping an overfit final epoch.
+
+At 0.783 this is a genuinely competent from-scratch NLI model (chance 0.333); large
+pretrained models reach ~0.90+ on SNLI, which needs pretraining scale outside this
+project's laptop-scale scope (RAG.md §2).
 
 ## Faithfulness (Phase 8)
 
-Computed by `meridian.verify.verify_grounded_answer` (NLI entailment of each cited
-sentence). Real values come from the trained verifier over real generated answers.
+`meridian.verify.verify_grounded_answer` runs the trained NLI verifier over each cited
+sentence of a real answer. Measured over all **527 PubMedQA dev queries** answered by the
+extractive answerer, verified by the SNLI+MultiNLI verifier (dev accuracy 0.7828):
+`uv run python scripts/benchmark_faithfulness.py --db <store> --split <dev split>
+--verifier <dir> --tokenizer <tokenizer>`.
 
-| Metric | Value | Run ID |
+| Metric | Value | Run |
 |---|---|---|
-| Citation precision | TBD | TBD |
-| Citation recall | TBD | TBD |
-| Hallucination rate | TBD | TBD |
-| Verifier–human agreement | TBD | TBD |
+| Citation precision | 0.751 | benchmark_faithfulness.py |
+| Citation recall | 0.750 | benchmark_faithfulness.py |
+| Hallucination rate | 0.437 | benchmark_faithfulness.py |
+| Fully-grounded answers | 0.000 | benchmark_faithfulness.py |
+| Verifier–human agreement | *not measured* — requires human annotation (not performed) | — |
+
+**Honest finding — the verifier does not transfer to biomedical text.** Extractive answers
+quote their cited abstract **verbatim**, so a perfect verifier would label every sentence
+ENTAILMENT and report a 0.000 hallucination rate. It reports **0.437**. That number is a
+*verifier error rate on out-of-domain text*, not a generator hallucination rate: a verifier
+trained on SNLI/MultiNLI (everyday English: "a man playing guitar") misjudges dense
+biomedical prose. This is exactly the gap ADR-0004 anticipates with **SciNLI domain
+adaptation**, which has not been run. Until it is, the Gate-3 faithfulness check would
+reject a large share of correctly-grounded answers — the fail-safe ladder degrades toward
+extractive/abstain, which is safe but conservative.
 
 ## Calibration / abstention (Phase 9)
 
-Risk-coverage trade-off (error rate vs fraction answered), with the operating point at
-~80% coverage (ADR-0007). Reproduce with `scripts/benchmark_calibration.py` (default:
-synthetic calibrated distribution; `--records` for the real dev gates). Curve:
-[`figures/risk_coverage.png`](figures/risk_coverage.png). Real thresholds and the
-off-domain abstain rate come from the trained gates on the frozen dev split.
+Risk-coverage trade-off (error rate vs fraction answered) from the **real Gate-1 retrieval
+confidence** (top-1 vs top-5 BM25 margin) over the frozen PubMedQA dev split (n=527), with
+the operating point at ~80% coverage (ADR-0007). Curve:
+[`figures/risk_coverage.png`](figures/risk_coverage.png). Reproduce with
+`uv run python scripts/benchmark_calibration.py --db <store> --split <dev split>`.
+
+| Metric | Value | Run |
+|---|---|---|
+| Coverage at the operating point | 0.801 | benchmark_calibration.py |
+| Error rate among answered, at that point | **0.000** | benchmark_calibration.py |
+| Answer coverage (extractive answerer, dev) | 1.000 | benchmark_faithfulness.py |
+
+**Finding.** Gate 1 is well-ordered on this corpus: at 80% coverage the retrieval error
+rate is **zero** — every question the gate is confident about has its gold abstract in the
+top-5. That follows from BM25's 0.987 R@5 (few errors, and they are the low-confidence
+ones). The extractive answerer abstains on none of the 527 dev queries, so coverage is
+1.000 before Gate 1 is applied; the gate is what buys the selective-answering trade-off.
 
 ## End-to-end (Phase 11)
 
@@ -139,8 +198,8 @@ lets it beat the majority baseline (below).
 | PubMedQA accuracy (from-scratch 3-class, MLM-pretrained) | **0.531** | train_pubmedqa_classifier.py |
 | — variant: no Stage-0 pretraining | 0.495 | `... --no-pretrain` |
 | — variant: inverse-frequency class weights | 0.411 | `... --class-weights` |
-| PubMedQA accuracy (full pipeline, trained at scale) | TBD | — |
-| Answer coverage @ operating point | TBD | — |
+| Answer coverage @ operating point | 0.801 (err 0.000) | benchmark_calibration.py |
+| PubMedQA accuracy (full pipeline w/ generator) | *not run* — needs the Phase-7 Zenith generator (untrained) | — |
 
 **Honest finding (below baseline; two levers tried, neither helps).** The from-scratch
 classifier reaches 0.531 and does **not** beat the 0.547 majority baseline. Two things were
@@ -164,13 +223,26 @@ but has not run at scale.
 
 ## Systems / latency (Phase 10)
 
-Measured over 527 real PubMedQA dev queries on the 1000-abstract corpus
-(`scripts/benchmark_latency.py`). Search = BM25 top-k; Answer = extractive answerer
-(retrieve + sentence scoring). Embed / rerank / generate / verify latencies are added
-once those models are trained.
+Per-stage wall-clock over real PubMedQA dev queries on the 1000-abstract corpus, **CPU**,
+with the trained embedder / reranker / verifier loaded (`scripts/benchmark_latency.py`
+with `--embedder --reranker --verifier --tokenizer`). Search = BM25 top-k; Answer =
+extractive answerer; Embed = query encode; Rerank = cross-encoder over 100 candidates;
+Verify = NLI over the cited sentences.
 
 | Stage | P50 | P95 | n |
 |---|---|---|---|
-| Search (BM25) | 0.84 ms | 1.36 ms | 527 |
-| Answer (extractive) | 1.12 ms | 1.54 ms | 527 |
-| Embed / Rerank / Generate / Verify | TBD | TBD | — |
+| Search (BM25) | 1.33 ms | 2.07 ms | 200 |
+| Answer (extractive) | 1.22 ms | 1.84 ms | 200 |
+| Embed (bi-encoder, 256-dim) | 2.56 ms | 3.43 ms | 200 |
+| Verify (NLI over cited sentences) | 31.61 ms | 42.79 ms | 200 |
+| **Rerank (cross-encoder, 100 candidates)** | **421.13 ms** | **510.12 ms** | 200 |
+| Generate | *not run* — needs the Phase-7 Zenith generator (untrained) | — | — |
+
+**Finding — reranking is the latency budget, exactly as designed (RAG.md §4.2).** The
+cross-encoder costs **~320× BM25** (421 ms vs 1.33 ms) because it runs full cross-attention
+over 100 query-passage pairs, while the bi-encoder embed is ~2.6 ms (it encodes the query
+once and reuses a precomputed index). Verification adds ~32 ms. Combined with the retrieval
+ablation — where reranking *hurt* quality on this corpus — the honest conclusion is that
+the rerank stage is off by default here: it is both the most expensive stage and, at this
+training scale, a negative-value one. An earlier 527-query CPU run measured search 0.84 ms
+/ answer 1.12 ms; the numbers above are a fresh 200-query run with all models resident.

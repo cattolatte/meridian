@@ -25,6 +25,29 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from meridian.abstain.calibration import operating_point, risk_coverage_curve
+from meridian.abstain.gate import retrieval_confidence
+from meridian.corpus.store import SqliteDocumentStore
+from meridian.eval.qrels import load_eval_set
+from meridian.retrieval.pipeline import BM25Retriever
+
+
+def _from_split(db: Path, split: Path, *, k: int = 5) -> list[tuple[bool, float]]:
+    """Real records: BM25 retrieval-gate confidence vs whether the gold PMID is in top-k.
+
+    ``correct`` is "the relevant passage was retrieved"; ``confidence`` is the Gate-1
+    top-1-vs-top-k margin (:mod:`meridian.abstain.gate`), the signal the gate actually
+    thresholds on.
+    """
+    eval_set = load_eval_set(split)
+    records: list[tuple[bool, float]] = []
+    with SqliteDocumentStore(db) as store:
+        retriever = BM25Retriever.from_store(store)
+        for query in eval_set.queries:
+            hits = retriever.retrieve(query.question, k=k)
+            confidence = retrieval_confidence(hits, margin_k=k)
+            correct = any(hit.pmid in query.relevant_pmids for hit in hits)
+            records.append((correct, confidence.margin))
+    return records
 
 
 def _synthetic(n: int, seed: int) -> list[tuple[bool, float]]:
@@ -38,6 +61,9 @@ def _synthetic(n: int, seed: int) -> list[tuple[bool, float]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--records", type=Path, help="JSON list of [correct, confidence]")
+    parser.add_argument("--db", type=Path, help="corpus store (with --split: real records)")
+    parser.add_argument("--split", type=Path, help="eval split (with --db: real records)")
+    parser.add_argument("--k", type=int, default=5)
     parser.add_argument("--n", type=int, default=800)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--target-coverage", type=float, default=0.8)
@@ -48,6 +74,9 @@ def main() -> None:
         raw = json.loads(args.records.read_text())
         records = [(bool(c), float(s)) for c, s in raw]
         source = "real"
+    elif args.db is not None and args.split is not None:
+        records = _from_split(args.db, args.split, k=args.k)
+        source = "real (BM25 gate)"
     else:
         records = _synthetic(args.n, args.seed)
         source = "synthetic"
