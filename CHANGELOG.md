@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-19
+
+First stable release. All 12 build phases are implemented and **every benchmark section
+carries real measured numbers** — the release gate set in Phase 12 (no `TBD` cells, no
+estimated metrics). Scope is honest: laptop-scale, production-*inspired*, with three
+items explicitly not run (the ~200K PubMed corpus, the Phase-7 generator pipeline, and
+verifier–human agreement) rather than estimated.
+
 ### Added
 
 - **Full benchmark sweep — every section measured, no `TBD` cells.** ANN on the real index
@@ -41,9 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   runbook. Verified training on Apple MPS.
 - **Phase 12 — v1.0 docs & demo (release gated on the real training campaign).**
   - README: architecture diagram (online path), serving quickstart, a guardrails
-    section, and an honest status note; MODEL_CARD component statuses updated to
-    "implemented (untrained on real data)". The v1.0.0 / PyPI release is deliberately
-    deferred until the real benchmark numbers exist (claims hygiene + release rules).
+    section, and an honest status note; MODEL_CARD component statuses. The v1.0.0 release
+    was gated on real benchmark numbers existing (claims hygiene + release rules) — that
+    gate is satisfied by the measured campaign above, which is why 1.0.0 ships now. PyPI
+    publication remains deliberately deferred.
 - **Phase 11 — evaluation campaign + error attribution.**
   - `meridian.eval.attribution`: oracle-substitution error attribution
     (`attribute_failure` / `attribution_study`) blaming each wrong answer on the
