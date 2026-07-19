@@ -5,4 +5,4 @@ reranker, and faithfulness verifier (Polaris), and the cited-answer
 generator (Zenith). Every answer is cited, verified, or refused.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"

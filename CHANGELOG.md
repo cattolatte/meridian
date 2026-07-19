@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-19
+
+### Fixed
+
+- **Package metadata for the first PyPI publication.** `Development Status` was still
+  `2 - Pre-Alpha`, which contradicted a 1.0 release on the rendered PyPI page; it is now
+  `4 - Beta` (honest for a laptop-scale, production-*inspired* project). Added a
+  `Documentation` URL pointing at BENCHMARKS.md.
+
 ## [1.0.0] - 2026-07-19
 
 First stable release. All 12 build phases are implemented and **every benchmark section
@@ -51,8 +60,8 @@ verifier–human agreement) rather than estimated.
   - README: architecture diagram (online path), serving quickstart, a guardrails
     section, and an honest status note; MODEL_CARD component statuses. The v1.0.0 release
     was gated on real benchmark numbers existing (claims hygiene + release rules) — that
-    gate is satisfied by the measured campaign above, which is why 1.0.0 ships now. PyPI
-    publication remains deliberately deferred.
+    gate is satisfied by the measured campaign above, which is why 1.0.0 ships now (PyPI
+    publication follows in 1.0.1).
 - **Phase 11 — evaluation campaign + error attribution.**
   - `meridian.eval.attribution`: oracle-substitution error attribution
     (`attribute_failure` / `attribution_study`) blaming each wrong answer on the

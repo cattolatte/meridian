@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meridian-rag"
-version = "1.0.0"
+version = "1.0.1"
 description = "A from-scratch grounded RAG engine over biomedical literature: every ML component trained in-house, every answer cited, verified, or refused."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -22,7 +22,7 @@ keywords = [
     "pytorch",
 ]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
@@ -70,6 +70,7 @@ Homepage = "https://github.com/cattolatte/meridian"
 Repository = "https://github.com/cattolatte/meridian"
 Changelog = "https://github.com/cattolatte/meridian/blob/main/CHANGELOG.md"
 Issues = "https://github.com/cattolatte/meridian/issues"
+Documentation = "https://github.com/cattolatte/meridian/blob/main/benchmarks/BENCHMARKS.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

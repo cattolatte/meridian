@@ -1582,7 +1582,7 @@ wheels = [
 
 [[package]]
 name = "meridian-rag"
-version = "1.0.0"
+version = "1.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
